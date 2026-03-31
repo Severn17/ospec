@@ -1,0 +1,145 @@
+name: ospec
+title: OSpec
+description: Protocol-shell-first OSpec bootstrap and execution skill for Codex, Claude Code, and similar AI tools.
+version: 5.1.0
+author: OSpec Team
+license: MIT
+
+interface:
+  display_name: "OSpec"
+  short_description: "Inspect, initialize, and operate OSpec projects"
+  default_prompt: "Use $ospec to inspect and initialize this directory according to OSpec rules: if the user intent is simply to initialize the project, still run the mandatory flow, keep protocol shell first, use explicit knowledge backfill later, assume no web template when the project type is unclear, and do not create the first change automatically."
+
+requires_local:
+  node: ">=18.0.0"
+  npm: ">=8.0.0"
+
+protocol:
+  project_files:
+    - ".skillrc"
+    - "SKILL.md"
+    - "SKILL.index.json"
+    - "build-index-auto.cjs"
+    - "for-ai/ai-guide.md"
+    - "for-ai/execution-protocol.md"
+    - "for-ai/naming-conventions.md"
+    - "for-ai/skill-conventions.md"
+    - "for-ai/workflow-conventions.md"
+    - "for-ai/development-guide.md"
+  feature_files:
+    - "changes/active/<feature>/proposal.md"
+    - "changes/active/<feature>/tasks.md"
+    - "changes/active/<feature>/state.json"
+    - "changes/active/<feature>/verification.md"
+  feature_name_format: "kebab-case"
+
+commands:
+  - id: status
+    command: "ospec status [project-dir]"
+    purpose: "Show project knowledge, execution status, and the recommended next step."
+  - id: init
+    command: "ospec init [root-dir]"
+    purpose: "Initialize the OSpec protocol shell from CLI."
+  - id: docs_generate
+    command: "ospec docs generate [project-dir]"
+    purpose: "Explicitly backfill the project knowledge layer after protocol-shell init without applying business scaffold or bootstrap summary."
+  - id: new
+    command: "ospec new <feature-name> [root-dir]"
+    purpose: "Create a new change under changes/active with proposal/tasks/state/verification/review."
+  - id: changes_status
+    command: "ospec changes status [project-dir]"
+    purpose: "Show PASS/WARN/FAIL protocol status for every active change."
+  - id: docs_status
+    command: "ospec docs status [project-dir]"
+    purpose: "Show project-doc coverage and missing knowledge docs."
+  - id: skills_status
+    command: "ospec skills status [project-dir]"
+    purpose: "Show layered SKILL coverage, module skills, and index status."
+  - id: index_check
+    command: "ospec index check [project-dir]"
+    purpose: "Show whether the skill index exists, is stale, or needs rebuild."
+  - id: index_build
+    command: "ospec index build [project-dir]"
+    purpose: "Rebuild the project skill index."
+  - id: progress
+    command: "ospec progress [changes/active/<feature>]"
+    purpose: "Show progress for a single active feature."
+  - id: verify
+    command: "ospec verify [changes/active/<feature>]"
+    purpose: "Check protocol completeness and optional-step coverage."
+  - id: archive
+    command: "ospec archive [changes/active/<feature>] [--check]"
+    purpose: "Archive a completed change after gate checks; use --check for readiness only."
+  - id: finalize
+    command: "ospec finalize [changes/active/<feature>]"
+    purpose: "Run verify + index refresh + archive as the standard closeout flow before commit."
+  - id: workflow_show
+    command: "ospec workflow show"
+    purpose: "Show workflow configuration for the current project."
+  - id: workflow_flags
+    command: "ospec workflow list-flags"
+    purpose: "List supported workflow feature flags."
+  - id: skill_status
+    command: "ospec skill status"
+    purpose: "Check whether the Codex-installed ospec skill is present and in sync."
+  - id: skill_install
+    command: "ospec skill install"
+    purpose: "Install or sync the OSpec skill suite into ~/.codex/skills/."
+  - id: skill_status_claude
+    command: "ospec skill status-claude"
+    purpose: "Check whether the Claude Code-installed ospec skill is present and in sync."
+  - id: skill_install_claude
+    command: "ospec skill install-claude"
+    purpose: "Install or sync the OSpec skill suite into ~/.claude/skills/."
+
+workflow:
+  read_order:
+    - ".skillrc"
+    - "changes/active/<feature>/proposal.md"
+    - "changes/active/<feature>/tasks.md"
+    - "changes/active/<feature>/state.json"
+    - "changes/active/<feature>/verification.md"
+  archive_requirements:
+    - "state.json.status must be ready_to_archive"
+    - "verification.md must be fully passed"
+    - "activated optional steps must appear in tasks.md and verification.md"
+    - "activated optional steps must be listed in verification.md.passed_optional_steps"
+  preferred_entry:
+    - "Run ospec status [path] first for a quick textual summary."
+    - "Run ospec init [path] when the directory is uninitialized."
+    - "Run ospec docs generate [path] when the protocol shell exists but project knowledge is still incomplete."
+    - "Create the first change explicitly instead of assuming bootstrap will do it."
+
+guardrails:
+  - "Treat init as protocol-shell-only initialization."
+  - "If the user intent is simply to initialize the project or current directory, still trigger the mandatory init flow without asking for a longer prompt."
+  - "When the user asks to initialize, run ospec status first, then ospec init if needed, and verify the protocol-shell files on disk before declaring success."
+  - "Do not assume the project is a web or Next.js project unless the repository or user makes that explicit."
+  - "Do not apply business scaffold during plain init."
+  - "Do not generate docs/project/bootstrap-summary.md during plain init or docs generate."
+  - "Do not create the first change automatically unless the user explicitly asks for a change."
+  - "Treat presets as planning defaults, not as init-time templates."
+
+prompt_profiles:
+  minimal: "Initialize this project with ospec. Run ospec status first, then ospec init if needed, and verify the protocol-shell files before saying it is initialized."
+  standard: "Initialize this project with ospec according to current OSpec rules. Even if the user only says initialize the project, run ospec status first, use ospec init for plain initialization, and verify the protocol-shell files on disk."
+  guardrail: "Use ospec for this directory. Default to protocol-shell init first, do not assume a web template, do not apply business scaffold during init, do not create the first change unless explicitly requested, and do not claim initialization is complete until the protocol-shell files are verified on disk."
+  knowledge_backfill: "Use ospec to backfill the project knowledge layer for this directory. Focus on docs, layered skills, and index state. Do not create a change yet."
+  change_creation: "Use ospec to create and advance a change for this requirement. Respect the current project state and do not treat bootstrap as auto-change creation."
+
+usage:
+  new_project_flow:
+    - "Inspect the target directory."
+    - "Initialize the protocol shell with ospec init [path]."
+    - "Verify .skillrc, changes/, .ospec/, build-index-auto.cjs, and the for-ai protocol docs before claiming init is complete."
+    - "Generate the project knowledge layer explicitly with ospec docs generate [path]."
+    - "Use presets only as planning defaults; scaffold and bootstrap summary still require explicit commit."
+    - "Create the first active change explicitly."
+  prompt_shortcuts:
+    - "initialize this project"
+    - "initialize this directory"
+    - "initialize the current project"
+    - "使用 ospec 初始化项目"
+    - "使用 ospec 初始化这个目录"
+    - "use ospec to initialize this directory"
+    - "use ospec to backfill the project knowledge layer"
