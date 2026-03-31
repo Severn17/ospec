@@ -16,6 +16,8 @@ const rootDir = path.resolve(__dirname, '..');
 
 const cliPath = path.join(rootDir, 'dist', 'cli.js');
 
+const packageJson = require(path.join(rootDir, 'package.json'));
+
 
 
 function run(command, args, options = {}) {
@@ -80,7 +82,7 @@ async function main() {
 
     let output = run('node', [cliPath, '--help']);
 
-    assertContains(output, 'OSpec CLI v1.0.1', 'root help');
+    assertContains(output, `OSpec CLI v${packageJson.version}`, 'root help');
 
 
 
@@ -111,6 +113,18 @@ async function main() {
     output = run('node', [cliPath, 'batch', '--help']);
 
     assertContains(output, 'ospec batch stats', 'batch help');
+
+
+
+    output = run('node', [cliPath, 'queue', '--help']);
+
+    assertContains(output, 'ospec queue add', 'queue help');
+
+
+
+    output = run('node', [cliPath, 'run', '--help']);
+
+    assertContains(output, 'ospec run start', 'run help');
 
 
 
@@ -208,6 +222,18 @@ async function main() {
 
 
 
+    output = run('node', [cliPath, 'queue', 'add', 'queued-smoke', tempDir]);
+
+    assertContains(output, 'Queued change queued-smoke created', 'queue add output');
+
+
+
+    output = run('node', [cliPath, 'queue', 'status', tempDir]);
+
+    assertContains(output, 'queued-smoke', 'queue status output');
+
+
+
     output = run('node', [cliPath, 'status', tempDir]);
 
     assertContains(output, 'Project Status', 'status output');
@@ -248,13 +274,20 @@ async function main() {
 
     const state = await fs.readJson(statePath);
 
-    state.status = 'verifying';
+    state.status = 'ready_to_archive';
 
-    state.current_step = 'verification';
+    state.current_step = 'ready_to_archive';
 
-    state.completed = ['proposal_complete', 'tasks_complete', 'implementation_complete'];
+    state.completed = [
+      'proposal_complete',
+      'tasks_complete',
+      'implementation_complete',
+      'skill_updated',
+      'index_regenerated',
+      'verification_passed',
+    ];
 
-    state.pending = ['skill_updated', 'index_regenerated', 'tests_passed', 'verification_passed', 'archived'];
+    state.pending = ['tests_passed', 'archived'];
 
     state.blocked_by = [];
 
@@ -284,7 +317,7 @@ async function main() {
 
     output = run('node', [cliPath, 'finalize', featureDir]);
 
-    assertContains(output, 'Finalize completed: verification passed and change archived', 'finalize output');
+    assertContains(output, 'Change finalized:', 'finalize output');
 
 
 
@@ -307,4 +340,3 @@ main().catch(error => {
   process.exit(1);
 
 });
-

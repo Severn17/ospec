@@ -10,16 +10,23 @@ class ChangesCommand extends BaseCommand_1.BaseCommand {
             switch (action) {
                 case 'status':
                 default: {
-                    const report = await services_1.services.projectService.getActiveChangeStatusReport(targetPath);
+                    const [report, queuedChanges] = await Promise.all([
+                        services_1.services.projectService.getActiveChangeStatusReport(targetPath),
+                        services_1.services.queueService.getQueuedChanges(targetPath),
+                    ]);
                     console.log('');
                     console.log('Active Changes');
                     console.log('==============');
                     console.log('');
                     console.log(`Total: ${report.totalActiveChanges}`);
+                    console.log(`Queued: ${queuedChanges.length}`);
                     console.log(`PASS ${report.totals.pass} | WARN ${report.totals.warn} | FAIL ${report.totals.fail}`);
                     console.log('');
                     if (report.changes.length === 0) {
                         console.log('No active changes.');
+                        if (queuedChanges.length > 0) {
+                            console.log('Queued changes are waiting.');
+                        }
                         console.log('');
                         return;
                     }
@@ -41,6 +48,16 @@ class ChangesCommand extends BaseCommand_1.BaseCommand {
                         }
                         console.log('');
                     }
+                    if (queuedChanges.length > 0) {
+                        console.log('Queued Changes');
+                        console.log('--------------');
+                        queuedChanges.forEach(change => {
+                            console.log(`QUEUED ${change.name} [${change.status}]`);
+                            console.log(`  Path: ${change.path}`);
+                            console.log(`  Step: ${change.currentStep}`);
+                        });
+                        console.log('');
+                    }
                 }
             }
         }
@@ -51,3 +68,4 @@ class ChangesCommand extends BaseCommand_1.BaseCommand {
     }
 }
 exports.ChangesCommand = ChangesCommand;
+//# sourceMappingURL=ChangesCommand.js.map

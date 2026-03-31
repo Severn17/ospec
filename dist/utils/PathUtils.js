@@ -37,8 +37,11 @@ exports.PathUtils = void 0;
 const path = __importStar(require("path"));
 const constants_1 = require("../core/constants");
 class PathUtils {
+    static getChangeDir(rootDir, bucket, featureName) {
+        return path.join(rootDir, constants_1.DIR_NAMES.CHANGES, bucket, featureName);
+    }
     static getFeatureDir(rootDir, featureName) {
-        return path.join(rootDir, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ACTIVE, featureName);
+        return this.getChangeDir(rootDir, constants_1.DIR_NAMES.ACTIVE, featureName);
     }
     static getFeatureFile(featureDir, type) {
         const fileNames = {

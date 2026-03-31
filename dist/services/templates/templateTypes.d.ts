@@ -4,6 +4,7 @@ export type TemplateDocumentLanguage = 'zh-CN' | 'en-US';
 export interface FeatureTemplateInput {
     feature: string;
     mode?: ProjectMode;
+    placement?: 'active' | 'queued';
     affects?: string[];
     flags?: string[];
     optionalSteps?: string[];
@@ -18,6 +19,7 @@ export interface FeatureTemplateInput {
 export interface NormalizedFeatureTemplateInput {
     feature: string;
     mode: ProjectMode;
+    placement: 'active' | 'queued';
     affects: string[];
     flags: string[];
     optionalSteps: string[];

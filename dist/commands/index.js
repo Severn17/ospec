@@ -8,7 +8,7 @@
 
 Object.defineProperty(exports, "__esModule", { value: true });
 
-exports.UpdateCommand = exports.IndexCommand = exports.PluginsCommand = exports.SkillsCommand = exports.SkillCommand = exports.DocsCommand = exports.WorkflowCommand = exports.BatchCommand = exports.StatusCommand = exports.FinalizeCommand = exports.ArchiveCommand = exports.ProgressCommand = exports.VerifyCommand = exports.NewCommand = exports.InitCommand = exports.BaseCommand = void 0;
+exports.UpdateCommand = exports.RunCommand = exports.QueueCommand = exports.IndexCommand = exports.PluginsCommand = exports.SkillsCommand = exports.SkillCommand = exports.DocsCommand = exports.WorkflowCommand = exports.BatchCommand = exports.StatusCommand = exports.FinalizeCommand = exports.ArchiveCommand = exports.ProgressCommand = exports.VerifyCommand = exports.NewCommand = exports.InitCommand = exports.BaseCommand = void 0;
 
 var BaseCommand_1 = require("./BaseCommand");
 
@@ -69,6 +69,14 @@ Object.defineProperty(exports, "PluginsCommand", { enumerable: true, get: functi
 var IndexCommand_1 = require("./IndexCommand");
 
 Object.defineProperty(exports, "IndexCommand", { enumerable: true, get: function () { return IndexCommand_1.IndexCommand; } });
+
+var QueueCommand_1 = require("./QueueCommand");
+
+Object.defineProperty(exports, "QueueCommand", { enumerable: true, get: function () { return QueueCommand_1.QueueCommand; } });
+
+var RunCommand_1 = require("./RunCommand");
+
+Object.defineProperty(exports, "RunCommand", { enumerable: true, get: function () { return RunCommand_1.RunCommand; } });
 
 var UpdateCommand_1 = require("./UpdateCommand");
 

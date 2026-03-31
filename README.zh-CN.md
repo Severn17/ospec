@@ -6,7 +6,7 @@ OSpec 是一个面向 AI 协作交付的 CLI 工作流系统。
 
 当前版本：
 
-- CLI：`1.1.2`
+- CLI：`0.1.0`
 
 文档入口：
 
@@ -207,6 +207,36 @@ ospec finalize changes/active/landing-refresh
 - archive
 
 最后把 change 从 `changes/active/` 挪到 `changes/archived/`，并把仓库留在“可以手动提交 Git”的状态。
+
+### 7. 显式队列模式
+
+队列模式默认是保守接入：
+
+- `ospec new` 仍然只创建一个普通 active change
+- 不会因为仓库状态自动进入队列模式
+- 只有显式使用 `ospec queue ...` 或 `ospec run ...` 才会启动队列能力
+
+核心命令：
+
+```bash
+ospec queue add landing-refresh .
+ospec queue add billing-cleanup .
+ospec queue status .
+ospec queue next .
+ospec run start . --profile manual-safe
+ospec run step .
+```
+
+runner profile 说明：
+
+- `manual-safe`：只做显式队列跟踪和激活，不改你现有的手动 change 执行方式
+- `archive-chain`：在一次显式 `ospec run step` 中，如果当前 active change 已满足归档门禁，OSpec 会先 finalize/archive，再继续推进下一个 queued change
+
+推荐给 AI 的描述方式：
+
+- 单个 change：`使用 OSpec 为这个需求创建并推进一个 change。`
+- 只建队列先不跑：`使用 OSpec 读取这份 TODO，把它拆成多个 change，建立队列，并先展示队列状态，不要马上执行。`
+- 显式按队列执行：`使用 OSpec 建立 change 队列，并用 ospec run manual-safe 显式推进。`
 
 ## 一个需求怎么流转
 
@@ -490,6 +520,7 @@ OSpec 的收口不是“代码写完就提交”，而是：
 - 显式扩展
 - 流程可检查
 - 插件可阻断
+- 队列能力只有在显式要求时才启动
 
 ## 快速体验顺序
 

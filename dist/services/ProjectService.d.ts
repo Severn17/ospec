@@ -121,6 +121,11 @@ export declare class ProjectService {
     getExecutionStatus(rootDir: string): Promise<ExecutionStatus>;
     getActiveChangeStatusReport(rootDir: string): Promise<ActiveChangeStatusReport>;
     getActiveChangeStatusItem(featurePath: string): Promise<ActiveChangeStatusItem>;
+    listActiveChangeNames(rootDir: string): Promise<string[]>;
+    finalizeChange(featurePath: string): Promise<{
+        archivePath: string;
+        change: ActiveChangeStatusItem;
+    }>;
     getFeatureProjectContext(rootDir: string, affects?: string[]): Promise<FeatureProjectContext>;
     getDocsStatus(rootDir: string): Promise<DocsStatus>;
     getSkillsStatus(rootDir: string): Promise<SkillsStatus>;

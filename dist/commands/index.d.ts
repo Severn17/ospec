@@ -34,6 +34,10 @@ export { PluginsCommand } from './PluginsCommand';
 
 export { IndexCommand } from './IndexCommand';
 
+export { QueueCommand } from './QueueCommand';
+
+export { RunCommand } from './RunCommand';
+
 export { UpdateCommand } from './UpdateCommand';
 
 //# sourceMappingURL=index.d.ts.map

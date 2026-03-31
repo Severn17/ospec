@@ -8,7 +8,7 @@ It is not a scaffold that starts by generating a pile of business templates. It 
 
 Current version:
 
-- CLI: `1.1.2`
+- CLI: `0.1.0`
 
 Documentation:
 
@@ -209,6 +209,36 @@ ospec finalize changes/active/landing-refresh
 - archive
 
 At the end, the change is moved from `changes/active/` to `changes/archived/`, and the repository is left in a state where you can make a manual Git commit.
+
+### 7. Explicit Queue Mode
+
+Queue mode is intentionally conservative:
+
+- `ospec new` still creates one normal active change
+- nothing enters queue mode implicitly
+- queue behavior starts only when you explicitly use `ospec queue ...` or `ospec run ...`
+
+Core queue commands:
+
+```bash
+ospec queue add landing-refresh .
+ospec queue add billing-cleanup .
+ospec queue status .
+ospec queue next .
+ospec run start . --profile manual-safe
+ospec run step .
+```
+
+Runner profiles:
+
+- `manual-safe`: only tracks and activates the queue explicitly; existing change execution stays manual
+- `archive-chain`: on an explicit `ospec run step`, if the current active change is archive-ready, OSpec finalizes it and then advances to the next queued change
+
+Recommended AI phrasing:
+
+- single change: `Use OSpec to create and advance one change for this requirement.`
+- build a queue without running it: `Use OSpec to break this TODO into multiple changes, create a queue, and show the queue first. Do not run it yet.`
+- explicit queue execution: `Use OSpec to create a change queue and execute it explicitly with ospec run manual-safe.`
 
 ## How a Request Flows
 
@@ -490,6 +520,7 @@ These behaviors reflect several core OSpec design choices:
 - explicit extension
 - inspectable workflow
 - plugins can block progression
+- queue mode only starts when explicitly requested
 
 ## Recommended Quick Trial
 

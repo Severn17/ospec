@@ -4145,6 +4145,504 @@ class ProjectService {
 
     }
 
+    async listActiveChangeNames(rootDir) {
+
+
+
+
+
+
+
+        const activeDir = path_1.default.join(rootDir, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ACTIVE);
+
+
+
+
+
+
+
+        if (!(await this.fileService.exists(activeDir))) {
+
+
+
+
+
+
+
+            return [];
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        const entries = await fs_extra_1.default.readdir(activeDir, { withFileTypes: true });
+
+
+
+
+
+
+
+        return entries
+
+
+
+
+
+
+
+            .filter(entry => entry.isDirectory())
+
+
+
+
+
+
+
+            .map(entry => entry.name)
+
+
+
+
+
+
+
+            .sort((left, right) => left.localeCompare(right));
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+    async finalizeChange(featurePath) {
+
+
+
+
+
+
+
+        const resolvedFeaturePath = path_1.default.resolve(featurePath);
+
+
+
+
+
+
+
+        const projectRoot = path_1.default.resolve(resolvedFeaturePath, '..', '..', '..');
+
+
+
+
+
+
+
+        const expectedParent = path_1.default.join(projectRoot, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ACTIVE);
+
+
+
+
+
+
+
+        if (path_1.default.dirname(resolvedFeaturePath) !== expectedParent) {
+
+
+
+
+
+
+
+            throw new Error('Finalize target must be a change directory under changes/active.');
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        await this.rebuildIndex(projectRoot);
+
+
+
+
+
+
+
+        const item = await this.getActiveChangeStatusItem(resolvedFeaturePath);
+
+
+
+
+
+
+
+        const blockingChecks = item.checks.filter(check => check.status === 'fail');
+
+
+
+
+
+
+
+        if (blockingChecks.length > 0) {
+
+
+
+
+
+
+
+            throw new Error(`Change ${item.name} is not ready to finalize. Failing checks: ${blockingChecks.map(check => check.name).join(', ')}`);
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        if (!item.archiveReady) {
+
+
+
+
+
+
+
+            throw new Error(`Change ${item.name} is not ready to archive yet.`);
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        const statePath = path_1.default.join(resolvedFeaturePath, constants_1.FILE_NAMES.STATE);
+
+
+
+
+
+
+
+        const proposalPath = path_1.default.join(resolvedFeaturePath, constants_1.FILE_NAMES.PROPOSAL);
+
+
+
+
+
+
+
+        const featureState = await this.fileService.readJSON(statePath);
+
+
+
+
+
+
+
+        const archivedRoot = path_1.default.join(projectRoot, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ARCHIVED);
+
+
+
+
+
+
+
+        await this.fileService.ensureDir(archivedRoot);
+
+
+
+
+
+
+
+        const datePrefix = new Date().toISOString().slice(0, 10);
+
+
+
+
+
+
+
+        const baseName = `${datePrefix}-${featureState.feature}`;
+
+
+
+
+
+
+
+        let archiveDirName = baseName;
+
+
+
+
+
+
+
+        let archiveIndex = 2;
+
+
+
+
+
+
+
+        while (await this.fileService.exists(path_1.default.join(archivedRoot, archiveDirName))) {
+
+
+
+
+
+
+
+            archiveDirName = `${baseName}-${archiveIndex}`;
+
+
+
+
+
+
+
+            archiveIndex += 1;
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        const archivePath = path_1.default.join(archivedRoot, archiveDirName);
+
+
+
+
+
+
+
+        const nextState = {
+
+
+
+
+
+
+
+            ...featureState,
+
+
+
+
+
+
+
+            status: 'archived',
+
+
+
+
+
+
+
+            current_step: 'archived',
+
+
+
+
+
+
+
+            completed: Array.from(new Set([...(featureState.completed || []), 'archived'])).sort((left, right) => left.localeCompare(right)),
+
+
+
+
+
+
+
+            pending: (featureState.pending || []).filter(step => step !== 'archived'),
+
+
+
+
+
+
+
+            blocked_by: [],
+
+
+
+
+
+
+
+        };
+
+
+
+
+
+
+
+        await this.fileService.move(resolvedFeaturePath, archivePath);
+
+
+
+
+
+
+
+        await this.fileService.writeJSON(path_1.default.join(archivePath, constants_1.FILE_NAMES.STATE), nextState);
+
+
+
+
+
+
+
+        const archivedProposalPath = path_1.default.join(archivePath, constants_1.FILE_NAMES.PROPOSAL);
+
+
+
+
+
+
+
+        if (await this.fileService.exists(archivedProposalPath)) {
+
+
+
+
+
+
+
+            const proposal = (0, gray_matter_1.default)(await this.fileService.readFile(archivedProposalPath));
+
+
+
+
+
+
+
+            proposal.data.status = 'archived';
+
+
+
+
+
+
+
+            await this.fileService.writeFile(archivedProposalPath, gray_matter_1.default.stringify(proposal.content, proposal.data));
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        await this.rebuildIndex(projectRoot);
+
+
+
+
+
+
+
+        return {
+
+
+
+
+
+
+
+            archivePath: this.toRelativePath(projectRoot, archivePath),
+
+
+
+
+
+
+
+            change: item,
+
+
+
+
+
+
+
+        };
+
+
+
+
+
+
+
+    }
+
 
 
 

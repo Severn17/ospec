@@ -70,7 +70,33 @@ class StateManager {
         state.current_step = targetStatus;
         await this.writeState(featurePath, state);
     }
-    createInitialState(feature, affects, mode = 'standard') {
+    createInitialState(feature, affects, mode = 'standard', options = {}) {
+        const now = new Date().toISOString();
+        if (options.queued) {
+            return {
+                version: '1.0',
+                feature,
+                mode,
+                status: 'queued',
+                current_step: 'queued',
+                affects,
+                completed: [],
+                pending: [
+                    'proposal_complete',
+                    'tasks_complete',
+                    'implementation_complete',
+                    'skill_updated',
+                    'index_regenerated',
+                    'tests_passed',
+                    'verification_passed',
+                    'archived',
+                ],
+                blocked_by: ['awaiting_activation'],
+                queued_at: now,
+                queue_source: options.source ?? 'queue',
+                last_updated: now,
+            };
+        }
         return {
             version: '1.0',
             feature,
@@ -90,7 +116,7 @@ class StateManager {
                 'archived',
             ],
             blocked_by: ['missing_proposal'],
-            last_updated: new Date().toISOString(),
+            last_updated: now,
         };
     }
 }

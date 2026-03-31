@@ -6,4 +6,6 @@ export declare function getIndexHelpText(): string;
 export declare function getWorkflowHelpText(): string;
 export declare function getBatchHelpText(): string;
 export declare function getChangesHelpText(): string;
+export declare function getQueueHelpText(): string;
+export declare function getRunHelpText(): string;
 //# sourceMappingURL=subcommandHelp.d.ts.map

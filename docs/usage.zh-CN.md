@@ -43,6 +43,22 @@ ospec docs generate [path]
 ospec new <change-name> [path]
 ```
 
+如果你明确要按队列管理多个 change，再执行：
+
+```bash
+ospec queue add <change-name> [path]
+ospec queue status [path]
+ospec run start [path] --profile manual-safe
+ospec run step [path]
+```
+
+注意这里是显式模式：
+
+- 默认流程仍然是单个 active change
+- 只有你显式使用 `queue` / `run` 命令时，才进入队列流程
+- `manual-safe` 不会改变现有手动执行流程，只负责显式跟踪和推进队列
+- `archive-chain` 会在一次显式 `run step` 中尝试 finalize 当前已满足门禁的 change，然后再推进下一个 queued change
+
 当一个 change 执行完成后，使用下面的标准收口命令：
 
 ```bash
@@ -54,7 +70,7 @@ ospec finalize [changes/active/<change>]
 如果是已经初始化过的项目，推荐按这个顺序升级：
 
 ```bash
-npm install -g ospec-cli@1.1.2
+npm install -g ospec-cli@0.1.0
 ospec update [path]
 ```
 

@@ -12,6 +12,7 @@ Use this skill when the user says things like "use ospec change to do a requirem
 This skill is the single entry for the full change lifecycle inside an initialized OSpec project:
 - requirement intake
 - change naming or matching
+- explicit queue planning when the user asks for queue behavior
 - proposal and task refinement
 - implementation guidance
 - progress tracking
@@ -26,11 +27,12 @@ This skill is the single entry for the full change lifecycle inside an initializ
 3. `for-ai/ai-guide.md`
 4. `for-ai/execution-protocol.md`
 5. If Stitch installation, provider switching, doctor remediation, MCP setup, or auth setup is involved, read the repo-local Stitch plugin spec first. When `docs/stitch-plugin-spec.zh-CN.md` exists, treat it as the source of truth for the config shape.
-6. `changes/active/<change>/proposal.md`
-7. `changes/active/<change>/tasks.md`
-8. `changes/active/<change>/state.json`
-9. `changes/active/<change>/verification.md`
-10. `changes/active/<change>/review.md`
+6. If the user explicitly asks for queue behavior, inspect `changes/queued/` before creating new queue items.
+7. `changes/active/<change>/proposal.md`
+8. `changes/active/<change>/tasks.md`
+9. `changes/active/<change>/state.json`
+10. `changes/active/<change>/verification.md`
+11. `changes/active/<change>/review.md`
 
 ## Language
 
@@ -67,13 +69,16 @@ When `.skillrc.plugins.stitch.enabled = true` and `.skillrc.plugins.stitch.capab
 2. If the repo is not initialized, stop at initialization guidance instead of forcing a change.
 3. If the request is a new requirement, derive a concise kebab-case change name and create it.
 4. If the matching active change already exists, continue it instead of duplicating it.
-5. Treat `changes/active/<change>/` as the execution container.
-6. Keep `proposal.md`, `tasks.md`, `state.json`, `verification.md`, and `review.md` aligned with actual execution and with the project's established document language.
-7. Use OSpec closeout commands instead of inventing a parallel process.
-8. Apply plugin gates from `.skillrc` before advancing a change.
-9. If `stitch_design_review` is activated, inspect the Stitch approval artifact before continuing execution.
-10. If the Stitch preview has not been submitted yet, run `ospec plugins run stitch <change-path>` before asking for design review.
-11. If Stitch approval is missing or not approved, stop at the review gate instead of treating the change as ready.
+5. Default to one active change unless the user explicitly asks to split work into multiple changes, create a queue, or execute a queue.
+6. When queue behavior is explicitly requested, derive an ordered list of concise kebab-case change names. Each name should represent one execution unit, not a mixed bundle.
+7. For explicit queue planning, present the queue as an ordered list first. Use `ospec queue add ...` to create queued changes and `ospec run ...` only when the user explicitly asks to run the queue.
+8. Treat `changes/active/<change>/` as the execution container.
+9. Keep `proposal.md`, `tasks.md`, `state.json`, `verification.md`, and `review.md` aligned with actual execution and with the project's established document language.
+10. Use OSpec closeout commands instead of inventing a parallel process.
+11. Apply plugin gates from `.skillrc` before advancing a change.
+12. If `stitch_design_review` is activated, inspect the Stitch approval artifact before continuing execution.
+13. If the Stitch preview has not been submitted yet, run `ospec plugins run stitch <change-path>` before asking for design review.
+14. If Stitch approval is missing or not approved, stop at the review gate instead of treating the change as ready.
 
 ## Commands
 
@@ -81,6 +86,13 @@ When `.skillrc.plugins.stitch.enabled = true` and `.skillrc.plugins.stitch.capab
 ospec status [path]
 ospec new <change-name> [path]
 ospec changes status [path]
+ospec queue status [path]
+ospec queue add <change-name> [path]
+ospec queue activate <change-name> [path]
+ospec queue next [path]
+ospec run start [path] --profile manual-safe
+ospec run step [path]
+ospec run status [path]
 ospec plugins status [path]
 ospec plugins doctor stitch [path]
 ospec plugins run stitch [changes/active/<change>]
@@ -97,6 +109,8 @@ ospec finalize [changes/active/<change>]
 - Do not assume dashboard workflows exist.
 - Do not refer to `basic` or `full` structure levels.
 - Do not confuse repository initialization with change execution.
+- Do not enter queue mode unless the user explicitly asks for queue behavior.
+- Do not turn an ordinary single requirement into multiple queued changes unless the user explicitly asks to split it.
 - Do not continue past an active Stitch review gate when approval is missing or not approved.
 - Do not claim completion until implementation, verification notes, and closeout status are aligned.
 - If real project tests exist, run or recommend them separately from `ospec verify`.

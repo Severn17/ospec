@@ -178,6 +178,10 @@ const NewCommand_1 = require("./commands/NewCommand");
 
 
 
+const QueueCommand_1 = require("./commands/QueueCommand");
+
+
+
 const ProgressCommand_1 = require("./commands/ProgressCommand");
 
 
@@ -202,6 +206,10 @@ const StatusCommand_1 = require("./commands/StatusCommand");
 
 
 
+const RunCommand_1 = require("./commands/RunCommand");
+
+
+
 const VerifyCommand_1 = require("./commands/VerifyCommand");
 
 
@@ -216,7 +224,7 @@ const services_1 = require("./services");
 
 
 
-const CLI_VERSION = '1.1.2';
+const CLI_VERSION = '0.1.0';
 
 
 
@@ -648,6 +656,46 @@ async function main() {
 
 
 
+            case 'queue': {
+
+
+
+                const queueCmd = new QueueCommand_1.QueueCommand();
+
+
+
+                await queueCmd.execute(commandArgs[0] || 'status', ...commandArgs.slice(1));
+
+
+
+                break;
+
+
+
+            }
+
+
+
+            case 'run': {
+
+
+
+                const runCmd = new RunCommand_1.RunCommand();
+
+
+
+                await runCmd.execute(commandArgs[0] || 'status', ...commandArgs.slice(1));
+
+
+
+                break;
+
+
+
+            }
+
+
+
             case 'docs': {
 
 
@@ -888,6 +936,8 @@ Commands:
   finalize [path]           Verify a completed change and archive it before commit
   batch <action> [path]     Batch operations (export, stats)
   changes [action] [path]   Active change summaries (status)
+  queue [action] [path]     Explicit queue helpers (status, add, activate, next)
+  run [action] [path]       Explicit queue runner helpers (start, status, step, resume, stop)
   docs [action] [path]      Docs helpers (status, generate)
   skills [action] [path]    Skills status helpers (status)
   plugins [action] [path]   Plugin helpers (list, status, enable, disable, approve, reject)
@@ -908,6 +958,11 @@ Examples:
   ospec archive ./changes/active/onboarding-flow --check
   ospec finalize ./changes/active/onboarding-flow
   ospec status
+  ospec queue add login-refresh . --flags ui_change
+  ospec queue status
+  ospec queue next
+  ospec run start . --profile manual-safe
+  ospec run step
   ospec docs status
   ospec docs generate
   ospec docs sync-protocol

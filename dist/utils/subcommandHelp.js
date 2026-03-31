@@ -9,6 +9,8 @@ exports.getWorkflowHelpText = getWorkflowHelpText;
 exports.getPluginsHelpText = getPluginsHelpText;
 exports.getBatchHelpText = getBatchHelpText;
 exports.getChangesHelpText = getChangesHelpText;
+exports.getQueueHelpText = getQueueHelpText;
+exports.getRunHelpText = getRunHelpText;
 const HELP_ACTIONS = new Set(['help', '--help', '-h']);
 function isHelpAction(action) {
     return HELP_ACTIONS.has(action || '');
@@ -90,6 +92,28 @@ Changes Commands:
   ospec changes status [path]  - show PASS/WARN/FAIL protocol status for every active change
   ospec finalize [path]        - verify and archive a completed change before commit
   ospec changes help           - show changes command help
+`;
+}
+function getQueueHelpText() {
+    return `
+Queue Commands:
+  ospec queue status [path]                    - show queued changes without activating them
+  ospec queue add <change-name> [path] [--flags flag1,flag2] - create a queued change explicitly
+  ospec queue activate <change-name> [path]    - move one queued change into changes/active
+  ospec queue next [path]                      - activate the next queued change
+  ospec queue help                             - show queue command help
+`;
+}
+function getRunHelpText() {
+    return `
+Run Commands:
+  ospec run start [path] [--profile manual-safe|archive-chain] - start explicit queue tracking
+  ospec run status [path]                                      - show current queue run status
+  ospec run step [path]                                        - advance one explicit queue step
+  ospec run resume [path]                                      - resume a paused or failed queue run
+  ospec run stop [path]                                        - pause the current queue run
+  ospec run logs [path]                                        - show recent queue run log lines
+  ospec run help                                               - show run command help
 `;
 }
 //# sourceMappingURL=subcommandHelp.js.map

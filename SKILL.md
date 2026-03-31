@@ -105,6 +105,22 @@ Use when the user is explicitly ready to move into execution.
 Use ospec to create and advance a change for this requirement. Respect the current project state and do not treat bootstrap as auto-change creation.
 ```
 
+### 6. Queue Prompt
+
+Use when the user explicitly wants multiple changes queued instead of one normal active change.
+
+```text
+Use ospec to break this TODO into multiple changes, create a queue, show the queue first, and do not run it yet.
+```
+
+### 7. Queue-Run Prompt
+
+Use when the user explicitly wants queue execution, not the normal single-change flow.
+
+```text
+Use ospec to create a change queue and execute it explicitly with ospec run manual-safe.
+```
+
 ## Anti-Drift Rules
 
 Always keep these rules:
@@ -116,6 +132,7 @@ Always keep these rules:
 - do not apply business scaffold during plain init
 - do not generate `docs/project/bootstrap-summary.md` during plain init or docs generate
 - do not create the first change automatically unless the user explicitly asks to create a change
+- do not enter queue mode unless the user explicitly asks for queue behavior
 - treat presets as planning defaults, not as init-time templates
 - use the CLI commands for inspection and progress review, not ad-hoc filesystem edits
 
@@ -162,6 +179,14 @@ ospec new <change-name> [path]
 ospec docs status [path]
 ospec skills status [path]
 ospec changes status [path]
+ospec queue status [path]
+ospec queue add <change-name> [path]
+ospec queue next [path]
+ospec run start [path] --profile manual-safe
+ospec run status [path]
+ospec run step [path]
+ospec run resume [path]
+ospec run stop [path]
 ospec plugins status [path]
 ospec plugins approve stitch [changes/active/<change>]
 ospec plugins reject stitch [changes/active/<change>]

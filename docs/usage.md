@@ -195,6 +195,27 @@ ospec new <change-name> [path]
 
 
 
+If you explicitly want to manage multiple changes as a queue:
+
+```bash
+
+ospec queue add <change-name> [path]
+
+ospec queue status [path]
+
+ospec run start [path] --profile manual-safe
+
+ospec run step [path]
+
+```
+
+Queue mode stays explicit:
+
+- the default workflow is still one active change
+- queue mode starts only when you explicitly use `queue` or `run`
+- `manual-safe` keeps execution manual and only tracks or advances the queue explicitly
+- `archive-chain` only finalizes and advances on an explicit `run step`
+
 When a change is complete, close it out with:
 
 
@@ -231,7 +252,7 @@ For a project that is already initialized, use this sequence:
 
 
 
-npm install -g ospec-cli@1.1.2
+npm install -g ospec-cli@0.1.0
 
 
 
@@ -374,5 +395,3 @@ ospec finalize [changes/active/<change>]
 
 
 `ospec finalize` is the standard closeout path. It verifies the completed change, refreshes the index, archives the change, and leaves the repository ready for manual commit.
-
-

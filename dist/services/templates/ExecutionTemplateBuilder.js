@@ -85,7 +85,7 @@ ${this.formatList(context.outOfScope, 'TBD')}
 ${this.formatChecklist(context.acceptanceCriteria, 'TBD')}`;
         return this.withFrontmatter({
             name: context.feature,
-            status: 'active',
+            status: context.placement === 'queued' ? 'queued' : 'active',
             created,
             affects: context.affects,
             flags: context.flags,
@@ -205,7 +205,7 @@ ${this.formatChecklist(context.acceptanceCriteria, 'Acceptance item 1')}
         return this.withFrontmatter({
             feature: context.feature,
             created,
-            status: 'verifying',
+            status: context.placement === 'queued' ? 'queued' : 'verifying',
             optional_steps: context.optionalSteps,
             passed_optional_steps: [],
         }, this.copy(context.documentLanguage, zh, en));

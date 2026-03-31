@@ -46,12 +46,11 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             this.validateArgs([featureName], 1);
             services_1.services.validationService.validateFeatureName(featureName);
             const targetDir = rootDir || process.cwd();
-            const featureDir = PathUtils_1.PathUtils.getFeatureDir(targetDir, featureName);
-            this.logger.info(`Creating change: ${featureName}`);
-            if (await services_1.services.fileService.exists(featureDir)) {
-                throw new Error(`Change ${featureName} already exists`);
-            }
-            await services_1.services.fileService.ensureDir(path.join(targetDir, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ACTIVE));
+            const placement = options.placement === constants_1.DIR_NAMES.QUEUED ? constants_1.DIR_NAMES.QUEUED : constants_1.DIR_NAMES.ACTIVE;
+            const featureDir = PathUtils_1.PathUtils.getChangeDir(targetDir, placement, featureName);
+            this.logger.info(`Creating ${placement === constants_1.DIR_NAMES.QUEUED ? 'queued change' : 'change'}: ${featureName}`);
+            await this.ensureChangeNameAvailable(targetDir, featureName);
+            await services_1.services.fileService.ensureDir(path.join(targetDir, constants_1.DIR_NAMES.CHANGES, placement));
             await services_1.services.fileService.ensureDir(featureDir);
             const config = await services_1.services.configManager.loadConfig(targetDir);
             const composer = new PluginWorkflowComposer_1.PluginWorkflowComposer(config);
@@ -63,10 +62,16 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             }
             const projectContext = await services_1.services.projectService.getFeatureProjectContext(targetDir, []);
             const documentLanguage = await this.resolveDocumentLanguage(targetDir, config);
-            await services_1.services.fileService.writeJSON(path.join(featureDir, constants_1.FILE_NAMES.STATE), services_1.services.stateManager.createInitialState(featureName, [], config.mode));
+            await services_1.services.fileService.writeJSON(path.join(featureDir, constants_1.FILE_NAMES.STATE), services_1.services.stateManager.createInitialState(featureName, [], config.mode, placement === constants_1.DIR_NAMES.QUEUED
+                ? {
+                    queued: true,
+                    source: options.source,
+                }
+                : undefined));
             await services_1.services.fileService.writeFile(path.join(featureDir, constants_1.FILE_NAMES.PROPOSAL), services_1.services.templateEngine.generateProposalTemplate({
                 feature: featureName,
                 mode: config.mode,
+                placement,
                 projectContext,
                 flags,
                 optionalSteps: activatedSteps,
@@ -75,6 +80,7 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             await services_1.services.fileService.writeFile(path.join(featureDir, constants_1.FILE_NAMES.TASKS), services_1.services.templateEngine.generateTasksTemplate({
                 feature: featureName,
                 mode: config.mode,
+                placement,
                 projectContext,
                 flags,
                 optionalSteps: activatedSteps,
@@ -83,6 +89,7 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             await services_1.services.fileService.writeFile(path.join(featureDir, constants_1.FILE_NAMES.VERIFICATION), services_1.services.templateEngine.generateVerificationTemplate({
                 feature: featureName,
                 mode: config.mode,
+                placement,
                 projectContext,
                 flags,
                 optionalSteps: activatedSteps,
@@ -91,13 +98,14 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             await services_1.services.fileService.writeFile(path.join(featureDir, constants_1.FILE_NAMES.REVIEW), services_1.services.templateEngine.generateReviewTemplate({
                 feature: featureName,
                 mode: config.mode,
+                placement,
                 projectContext,
                 flags,
                 optionalSteps: activatedSteps,
                 documentLanguage,
             }));
             await this.writePluginArtifacts(featureDir, activatedSteps);
-            this.success(`Change ${featureName} created at ${featureDir}`);
+            this.success(`${placement === constants_1.DIR_NAMES.QUEUED ? 'Queued change' : 'Change'} ${featureName} created at ${featureDir}`);
             if (flags.length > 0) {
                 this.info(`  Flags: ${flags.join(', ')}`);
             }
@@ -174,6 +182,21 @@ class NewCommand extends BaseCommand_1.BaseCommand {
             return null;
         }
         return null;
+    }
+    async ensureChangeNameAvailable(targetDir, featureName) {
+        const activeDir = PathUtils_1.PathUtils.getChangeDir(targetDir, constants_1.DIR_NAMES.ACTIVE, featureName);
+        const queuedDir = PathUtils_1.PathUtils.getChangeDir(targetDir, constants_1.DIR_NAMES.QUEUED, featureName);
+        const conflicts = [];
+        if (await services_1.services.fileService.exists(activeDir)) {
+            conflicts.push('changes/active');
+        }
+        if (await services_1.services.fileService.exists(queuedDir)) {
+            conflicts.push('changes/queued');
+        }
+        if (conflicts.length === 0) {
+            return;
+        }
+        throw new Error(`Change ${featureName} already exists in ${conflicts.join(' and ')}. Continue the existing change instead of creating a duplicate.`);
     }
     async writePluginArtifacts(featureDir, activatedSteps) {
         const checkpointSteps = activatedSteps.filter(step => step === 'checkpoint_ui_review' || step === 'checkpoint_flow_check');
