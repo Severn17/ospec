@@ -218,7 +218,8 @@ async function main() {
 
     output = run('node', [cliPath, 'init', tempDir]);
 
-    assertContains(output, 'Protocol shell initialized', 'init output');
+    assertContains(output, 'Project initialized to change-ready state', 'init output');
+    assertContains(output, 'Protocol shell: created', 'init protocol shell output');
 
 
 
