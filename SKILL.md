@@ -1,12 +1,12 @@
 ---
 name: ospec
-description: Protocol-shell-first OSpec workflow for inspection, change-ready initialization, docs maintenance, change execution, verification, and archive readiness.
+description: Document-driven OSpec workflow for AI-assisted development with change-ready initialization, execution, validation, and archive readiness.
 tags: [cli, workflow, automation, typescript, ospec, bootstrap]
 ---
 
 # OSpec CLI
 
-Protocol-shell-first OSpec workflow for change-ready initialization, execution, validation, archiving, and docs maintenance.
+Document-driven OSpec workflow for AI-assisted development with change-ready initialization, execution, validation, archiving, and docs maintenance.
 
 ## Default Entry
 

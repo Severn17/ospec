@@ -1,6 +1,6 @@
 name: ospec
 title: OSpec
-description: Protocol-shell-first OSpec bootstrap and execution skill for Codex, Claude Code, and similar AI tools.
+description: Document-driven OSpec workflow skill for AI-assisted development with Codex, Claude Code, and similar AI tools.
 version: 5.1.0
 author: OSpec Team
 license: MIT

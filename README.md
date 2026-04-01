@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/workflow-3_steps-0F766E?style=flat-square" alt="3-step workflow">
 </p>
 
-OSpec is an AI-first CLI workflow system for initializing repositories to a change-ready state and delivering requirements through auditable change containers.
+OSpec is a document-driven workflow for AI-assisted development, helping you define requirements and changes in docs first, then drive implementation, validation, and archive through AI collaboration.
 
 <p align="center">
   <a href="docs/README.md">Docs</a> |

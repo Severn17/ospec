@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/workflow-3_steps-0F766E?style=flat-square" alt="3-step workflow">
 </p>
 
-OSpec 是一个面向 AI 协作交付的 CLI 工作流系统，用来把仓库一次性初始化到可提 change 的状态，并通过可审计的 change 容器推进需求执行。
+OSpec 是一个面向 AI 对话协作的文档驱动开发工作流，让你先用文档明确需求与变更，再驱动 AI 实现、验证与归档。
 
 <p align="center">
   <a href="docs/README.zh-CN.md">文档入口</a> |

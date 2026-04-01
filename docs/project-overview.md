@@ -2,9 +2,9 @@
 
 ## What OSpec Is
 
-OSpec is a CLI workflow system for AI-assisted project delivery.
+OSpec is a document-driven workflow for AI-assisted development, helping you define requirements and changes in docs first, then drive implementation, validation, and archive through AI collaboration.
 
-It is designed around a protocol shell instead of a full starter template. Initialization should set up the collaboration rules and baseline project knowledge first, then let requirements move through explicit change containers.
+It treats docs as the source of truth for requirements and changes. Initialization sets up collaboration rules and baseline project knowledge first, then lets AI drive implementation through explicit change containers.
 
 ## Core Principles
 
