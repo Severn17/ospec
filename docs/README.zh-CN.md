@@ -6,11 +6,13 @@
 
 ## 建议先读
 
-1. [项目介绍](project-overview.zh-CN.md)
-2. [安装说明](installation.zh-CN.md)
-3. [使用说明](usage.zh-CN.md)
-4. [提示词文档](prompt-guide.zh-CN.md)
+1. [提示词文档](prompt-guide.zh-CN.md)
+2. [使用说明](usage.zh-CN.md)
+3. [项目介绍](project-overview.zh-CN.md)
+4. [安装说明](installation.zh-CN.md)
 5. [Skills 安装说明](skills-installation.zh-CN.md)
+
+现在 `ospec init` 已经是一条命令直达 `change-ready` 的入口；`ospec docs generate` 只保留为后续知识层维护命令。
 
 ## 补充文档
 

@@ -6,11 +6,13 @@ This is the public documentation index for the OSpec release repository.
 
 ## Start Here
 
-1. [Project Overview](project-overview.md)
-2. [Installation](installation.md)
-3. [Usage](usage.md)
-4. [Prompt Guide](prompt-guide.md)
+1. [Prompt Guide](prompt-guide.md)
+2. [Usage](usage.md)
+3. [Project Overview](project-overview.md)
+4. [Installation](installation.md)
 5. [Skills Installation](skills-installation.md)
+
+`ospec init` is now the one-step path to a change-ready repository. Use `ospec docs generate` later only when you need a docs maintenance pass.
 
 ## Additional Docs
 

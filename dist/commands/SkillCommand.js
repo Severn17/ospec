@@ -28,11 +28,11 @@ const ACTION_SKILLS = [
 
         title: 'OSpec Init',
 
-        description: 'Initialize the OSpec protocol shell for a directory without assuming stack templates or creating the first change.',
+        description: 'Initialize an OSpec repository to change-ready state without creating the first change automatically.',
 
-        shortDescription: 'Initialize OSpec protocol shell',
+        shortDescription: 'Initialize OSpec to change-ready',
 
-        defaultPrompt: 'Use $ospec-init to inspect the target directory, run ospec status first, initialize the protocol shell with ospec init when needed, and verify the protocol-shell files on disk. Do not create docs backfill, business scaffold, or the first change automatically.',
+        defaultPrompt: 'Use $ospec-init to initialize the target directory with ospec init so the repository ends in change-ready state. Reuse existing project docs when available. If the repository lacks a usable project overview and you are in an AI-assisted flow, ask one concise question for project summary or tech stack before calling ospec init with those inputs; if the user declines, run plain ospec init and allow placeholder docs. Verify the protocol-shell files and project knowledge docs on disk. Do not create the first change automatically.',
 
         markdown: `# OSpec Init
 
@@ -46,15 +46,17 @@ Use this action when the user intent is initialization.
 
 
 
-- run \`ospec status [path]\` first
+- use \`ospec init [path]\` so the repository ends in change-ready state
 
-- use \`ospec init [path]\` for plain initialization
+- verify \`.skillrc\`, \`.ospec/\`, \`changes/\`, \`SKILL.md\`, \`SKILL.index.json\`, \`build-index-auto.cjs\`, \`for-ai/\`, and \`docs/project/\` files on disk
 
-- verify \`.skillrc\`, \`.ospec/\`, \`changes/\`, \`SKILL.md\`, \`SKILL.index.json\`, \`build-index-auto.cjs\`, and \`for-ai/\` files on disk
+- if project overview context is missing and AI can ask follow-up questions, ask for a brief summary or tech stack before initialization; if the user declines, fall back to placeholder docs
+
+- use \`ospec status [path]\` only when you want an explicit summary or troubleshooting snapshot
 
 - do not assume a web template when the project type is unclear
 
-- do not backfill docs or create the first change unless explicitly requested
+- do not create the first change unless explicitly requested
 
 
 
@@ -64,9 +66,11 @@ Use this action when the user intent is initialization.
 
 \`\`\`bash
 
-ospec status [path]
-
 ospec init [path]
+
+ospec init [path] --summary "..." --tech-stack node,react
+
+ospec status [path]
 
 \`\`\`
 
@@ -130,17 +134,17 @@ ospec changes status [path]
 
         title: 'OSpec Backfill',
 
-        description: 'Backfill the project knowledge layer after protocol-shell init without applying business scaffold or creating a change.',
+        description: 'Refresh or repair the project knowledge layer for an initialized repository without creating a change.',
 
-        shortDescription: 'Backfill project knowledge layer',
+        shortDescription: 'Refresh project knowledge layer',
 
-        defaultPrompt: 'Use $ospec-backfill to backfill the project knowledge layer after protocol-shell init. Prefer ospec docs generate, keep scaffold explicit, and do not create the first change automatically.',
+        defaultPrompt: 'Use $ospec-backfill to refresh, repair, or backfill the project knowledge layer for an initialized repository. Prefer ospec docs generate when you only need docs maintenance, keep scaffold explicit, and do not create the first change automatically.',
 
         markdown: `# OSpec Backfill
 
 
 
-Use this action after the protocol shell already exists and the repository still lacks project knowledge.
+Use this action after the repository is already initialized and the project knowledge docs need maintenance.
 
 
 
@@ -148,7 +152,7 @@ Use this action after the protocol shell already exists and the repository still
 
 
 
-- require the protocol shell first
+- require an initialized repository first
 
 - prefer \`ospec docs generate [path]\`
 
@@ -787,7 +791,7 @@ class SkillCommand extends BaseCommand_1.BaseCommand {
 
             title: 'OSpec',
 
-            description: 'Protocol-shell-first OSpec workflow for initialization, project knowledge backfill, change execution, verification, and archive readiness.',
+            description: 'Protocol-shell-first OSpec workflow for inspection, change-ready initialization, docs maintenance, change execution, verification, and archive readiness.',
 
             shortDescription: 'Inspect, initialize, and operate OSpec projects',
 
@@ -1025,7 +1029,7 @@ ${markdownBody.trimStart()}`;
 
         if (/^---\r?\n/.test(definition.markdown)) {
 
-            return definition.markdown;
+            return this.ensureFrontmatterDescription(definition.markdown, definition.description);
 
         }
 
@@ -1042,6 +1046,24 @@ tags: [ospec, cli, workflow]
 
 
 ${definition.markdown.trimStart()}`;
+
+    }
+
+    ensureFrontmatterDescription(markdown, description) {
+
+        if (!/^---\r?\n/.test(markdown)) {
+
+            return markdown;
+
+        }
+
+        if (/^---\r?\n[\s\S]*?\r?\ndescription:\s+/m.test(markdown)) {
+
+            return markdown;
+
+        }
+
+        return markdown.replace(/^---\r?\n/, `---\ndescription: ${description}\n`);
 
     }
 
@@ -1091,7 +1113,7 @@ Prefer this prompt style for new work:
 
 2. \`Use ospec to inspect this repository\`
 
-3. \`Use ospec to backfill the project knowledge layer\`
+3. \`Use ospec to refresh or repair the project knowledge layer\`
 
 4. \`Use ospec to create and advance a change for this requirement\`
 
@@ -1157,7 +1179,7 @@ interface:
 
   short_description: "Legacy alias for the OSpec skill"
 
-  default_prompt: "Use $ospec to inspect and initialize this directory according to OSpec rules: protocol shell first, explicit knowledge backfill, no assumed web template when the project type is unclear, and no automatic first change."
+  default_prompt: "Use $ospec to initialize this directory according to OSpec rules: init should end in change-ready state, reuse existing docs when available, ask for missing summary or tech stack in AI-assisted flows before falling back to placeholder docs, avoid assumed web templates when the project type is unclear, and do not create the first change automatically."
 
 `,
 
@@ -1167,7 +1189,7 @@ interface:
 
   short_description: "Legacy alias for the OSpec skill"
 
-  default_prompt: "Use $ospec to inspect and initialize this directory according to OSpec rules: protocol shell first, explicit knowledge backfill, no assumed web template when the project type is unclear, and no automatic first change."
+  default_prompt: "Use $ospec to initialize this directory according to OSpec rules: init should end in change-ready state, reuse existing docs when available, ask for missing summary or tech stack in AI-assisted flows before falling back to placeholder docs, avoid assumed web templates when the project type is unclear, and do not create the first change automatically."
 
 `,
 

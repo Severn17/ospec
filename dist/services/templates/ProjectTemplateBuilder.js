@@ -142,7 +142,6 @@ ${context.architecture}
 ## Navigation
 
 - Project overview: [project/overview.md](project/overview.md)
-- Bootstrap summary: [project/bootstrap-summary.md](project/bootstrap-summary.md)
 - Tech stack: [project/tech-stack.md](project/tech-stack.md)
 - Architecture: [project/architecture.md](project/architecture.md)
 - Module map: [project/module-map.md](project/module-map.md)
@@ -157,7 +156,6 @@ ${context.architecture}
 ## 文档导航
 
 - 项目概览：[project/overview.md](project/overview.md)
-- 初始化摘要：[project/bootstrap-summary.md](project/bootstrap-summary.md)
 - 技术栈：[project/tech-stack.md](project/tech-stack.md)
 - 架构说明：[project/architecture.md](project/architecture.md)
 - 模块地图：[project/module-map.md](project/module-map.md)
@@ -283,8 +281,7 @@ ${context.summary}
 
 ## Current Goals
 
-- Complete the project knowledge layer
-- Use [bootstrap-summary.md](bootstrap-summary.md) as the recorded bootstrap output
+- Keep the project knowledge docs aligned with the real repository state
 - Establish layered skill files
 - Manage delivery through the change workflow`
             : `# 项目概览
@@ -299,8 +296,7 @@ ${context.summary}
 
 ## 当前目标
 
-- 补齐项目知识层
-- 以 [bootstrap-summary.md](bootstrap-summary.md) 记录初始化结果与脚手架输出
+- 保持项目知识文档与仓库真实状态一致
 - 建立分层 SKILL 体系
 - 使用 change workflow 管理需求交付`;
         return this.withFrontmatter({
@@ -1008,11 +1004,9 @@ scan(rootDir)
         const docsLink = this.formatReferenceList(refs, this.copy(context.documentLanguage, '待补充', 'TBD'));
         const relatedDocs = this.isEnglish(context.documentLanguage)
             ? `- Module map: [../../../docs/project/module-map.md](../../../docs/project/module-map.md)
-- API overview: [../../../docs/project/api-overview.md](../../../docs/project/api-overview.md)
-- Bootstrap summary: [../../../docs/project/bootstrap-summary.md](../../../docs/project/bootstrap-summary.md)`
+- API overview: [../../../docs/project/api-overview.md](../../../docs/project/api-overview.md)`
             : `- 项目模块地图：[../../../docs/project/module-map.md](../../../docs/project/module-map.md)
-- API 总览：[../../../docs/project/api-overview.md](../../../docs/project/api-overview.md)
-- 初始化摘要：[../../../docs/project/bootstrap-summary.md](../../../docs/project/bootstrap-summary.md)`;
+- API 总览：[../../../docs/project/api-overview.md](../../../docs/project/api-overview.md)`;
         const templates = {
             web: {
                 zh: `# ${moduleName} 模块

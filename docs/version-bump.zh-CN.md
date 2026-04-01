@@ -22,8 +22,8 @@
 1. `package.json`
 2. `package-lock.json`
 3. `dist/cli.js`
-4. `README.md`
-5. `README.zh-CN.md`
+4. `docs/usage.md`
+5. `docs/usage.zh-CN.md`
 
 ## 标准操作步骤
 
@@ -34,8 +34,8 @@
 - `package.json`
 - `package-lock.json`
 - `dist/cli.js`
-- `README.md`
-- `README.zh-CN.md`
+- `docs/usage.md`
+- `docs/usage.zh-CN.md`
 
 ### 2. 升级 `package.json` 和 `package-lock.json`
 
@@ -56,14 +56,16 @@ npm version major --no-git-tag-version
 
 把 `dist/cli.js` 里的 `CLI_VERSION` 改成新版本。
 
-### 4. 同步 README 中的版本展示
+### 4. 同步对外文档中的版本展示
 
 更新以下文件里的 CLI 版本展示：
 
-- `README.md`
-- `README.zh-CN.md`
+- `docs/usage.md`
+- `docs/usage.zh-CN.md`
 
-只更新 CLI 版本，不改 `Skills protocol` 版本，除非有单独要求。
+主 README 目前不展示 CLI 版本号，因此这里不再要求修改 README。
+
+只更新 CLI 版本，不改其他协议或 skill 版本，除非有单独要求。
 
 ### 5. 做最小验证
 

@@ -18,24 +18,6 @@ const updates = [
     ],
   },
   {
-    file: 'README.md',
-    replacements: [
-      {
-        pattern: /- CLI: `[^`]+`/,
-        value: `- CLI: \`${version}\``,
-      },
-    ],
-  },
-  {
-    file: 'README.zh-CN.md',
-    replacements: [
-      {
-        pattern: /- CLI：`[^`]+`/,
-        value: `- CLI：\`${version}\``,
-      },
-    ],
-  },
-  {
     file: 'docs/usage.md',
     replacements: [
       {

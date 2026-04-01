@@ -4,31 +4,36 @@
 
 这份文档用于梳理当前仓库里真正还在使用、并且准备继续保留的 spec 流程。
 
-本轮调整后，有两个明确变化：
+本轮调整后的核心变化是：
 
-- 初始化后的结构层级只保留 `none`
+- 初始化不再拆成“协议壳初始化 + 首次 docs generate”两个必走步骤
+- `ospec init` 现在直接把仓库带到可提 change 的状态
+- `ospec docs generate` 下沉为后续维护命令
 - dashboard 已移除，流程统一回到 CLI
 
 ## 2. 当前流程主线
 
-当前项目仍然是四段式流程：
+当前项目收敛为四段式主线：
 
-1. 协议壳初始化
-2. 项目知识层补齐
-3. active change 执行
-4. verify / archive 收口
+1. 初始化到 `change-ready`
+2. active change 执行
+3. 部署并验证
+4. 需求归档
 
 对应常用命令是：
 
 ```bash
-ospec status [path]
 ospec init [path]
-ospec docs generate [path]
 ospec new <change-name> [path]
 ospec progress [changes/active/<change>]
 ospec verify [changes/active/<change>]
-ospec archive [changes/active/<change>]
 ospec finalize [changes/active/<change>]
+```
+
+如果后续只是维护项目知识层，再使用：
+
+```bash
+ospec docs generate [path]
 ```
 
 ## 3. 初始化后的结构判断
@@ -45,6 +50,7 @@ ospec finalize [changes/active/<change>]
 这意味着初始化后的判断不再依赖结构层级名称，而是直接看：
 
 - 是否已初始化
+- 是否已经 `change-ready`
 - docs 覆盖率是否完整
 - 是否存在 active changes
 - 当前 change 是否可归档
@@ -72,6 +78,8 @@ ospec finalize [changes/active/<change>]
 - `docs/project/architecture.md`
 - `docs/project/module-map.md`
 - `docs/project/api-overview.md`
+
+这些文档默认由 `ospec init` 首次生成；后续如果需要刷新或修复，再交给 `ospec docs generate`。
 
 ### 4.3 单个 change 的执行 spec
 
@@ -122,9 +130,33 @@ ospec finalize [changes/active/<change>]
 - activated optional steps 已进入 `passed_optional_steps`
 - `tasks.md` 和 `verification.md` 不再有未勾选项
 
-## 7. 本轮移除项
+### `ospec finalize`
 
-### 7.1 Dashboard
+当前仍是标准官方收口入口，用于串起：
+
+- verify
+- index refresh
+- archive
+
+## 7. 初始化与 AI 跟进式补充
+
+当用户通过 AI 提示词表达“使用 OSpec 初始化项目”时，当前推荐行为是：
+
+1. 直接进入初始化流程
+2. 如果已有项目说明文档，则直接复用
+3. 如果缺少足够上下文，只追问一次项目概况或技术栈
+4. 如果用户不补充，也继续初始化，并生成待补充的占位文档
+5. 初始化完成后，仓库应直接可进入 `ospec new`
+
+当用户直接在终端执行 `ospec init` 时：
+
+- 不走对话追问
+- 直接落占位项目文档
+- 保证结果仍然是 `change-ready`
+
+## 8. 本轮移除项
+
+### 8.1 Dashboard
 
 dashboard 相关代码与命令已移除。
 
@@ -135,7 +167,7 @@ dashboard 相关代码与命令已移除。
 - dashboard 静态前端资源
 - dashboard 相关帮助文案
 
-### 7.2 `basic / full` 结构层级
+### 8.2 `basic / full` 结构层级
 
 结构判断只保留 `none`。
 
@@ -147,15 +179,7 @@ dashboard 相关代码与命令已移除。
 统一改为讨论：
 
 - 是否已初始化
-- docs 是否补齐
+- 是否已 `change-ready`
+- 知识层是否完整
 - change 是否在执行中
 - 是否已可归档
-
-## 8. 下一步适合微调的点
-
-基于当前收敛后的流程，下一步最值得继续讨论的是：
-
-1. `verify` 是否要从预检查提升为更强门禁
-2. `review.md` 是否要进入硬性归档条件
-3. `finalize` 是否要作为唯一官方收口入口
-4. docs、`SKILL.md`、`state.json` 三者之间的职责边界是否还要再收紧
