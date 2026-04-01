@@ -1,5 +1,144 @@
 # Checkpoint 插件规范文档
 
+这份文档先讲用户怎么用 `checkpoint`，再保留后面的详细技术规范。
+
+## 先看这个插件是干什么的
+
+`checkpoint` 用来做运行中的页面检查、流程验证和自动化门禁。
+
+适合的场景：
+
+- 关键提交流程
+- 验收前的页面与交互检查
+- 需要自动化确认 UI、流程、接口和最终结果的 change
+
+它的核心作用是：
+
+- 运行自动化检查
+- 生成门禁结果
+- 在检查没通过前阻断 `verify / archive / finalize`
+
+## 用户怎么打开这个插件
+
+AI 对话方式：
+
+```text
+使用 OSpec 帮我打开 Checkpoint 插件。
+```
+
+Skill 方式：
+
+```text
+使用 $ospec 帮我打开 Checkpoint 插件。
+```
+
+命令行：
+
+```bash
+ospec plugins enable checkpoint . --base-url http://127.0.0.1:3000
+```
+
+## 打开后你还需要配置什么
+
+启用 `checkpoint` 后，最少要把下面这些内容补齐：
+
+1. `base_url`
+2. `routes.yaml`
+3. `flows.yaml`
+4. 登录态或登录脚本
+5. 启动命令与就绪检查（如果项目不能直接访问）
+
+### 1. `base_url`
+
+`checkpoint` 第一次启用时必须带 `--base-url`。
+
+这个地址就是自动化检查实际访问的应用地址，例如：
+
+- `http://127.0.0.1:3000`
+- `http://localhost:4173`
+
+### 2. `routes.yaml`
+
+你要在 `.ospec/plugins/checkpoint/routes.yaml` 里写清楚：
+
+- 要检查哪些页面
+- 每个页面用什么视口
+- 对应的基线截图或设计基线
+- 哪些区域需要忽略
+- 页面上有哪些关键文本或 UI 要求
+
+### 3. `flows.yaml`
+
+你要在 `.ospec/plugins/checkpoint/flows.yaml` 里写清楚：
+
+- 关键流程从哪里开始
+- 中间步骤怎么走
+- 需要断言哪些接口结果
+- 需要断言哪些业务最终状态
+
+### 4. 登录态或登录脚本
+
+如果流程依赖登录，你至少需要准备其中一种：
+
+- `.ospec/plugins/checkpoint/auth/storage-state.json`
+- `.ospec/plugins/checkpoint/auth/login.js` 之类的登录脚本
+
+如果没有登录态，很多真实流程在自动化检查时跑不通。
+
+### 5. 启动命令与就绪检查
+
+如果你的项目不是“天然已经跑起来”的，还需要在 `.skillrc.plugins.checkpoint.runtime` 里补这些内容：
+
+- `startup`
+- `readiness`
+- `shutdown`
+
+最常见的做法是：
+
+- 用 `docker compose up -d` 启动
+- 用健康检查 URL 等待服务 ready
+- 跑完后再关闭环境
+
+## 打开后会生成什么
+
+启用后，项目里会出现这些和 Checkpoint 相关的内容：
+
+- `.skillrc.plugins.checkpoint`
+- `.ospec/plugins/checkpoint/routes.yaml`
+- `.ospec/plugins/checkpoint/flows.yaml`
+- `.ospec/plugins/checkpoint/baselines/`
+- `.ospec/plugins/checkpoint/auth/`
+- `.ospec/plugins/checkpoint/cache/`
+
+真正和某个 change 绑定的执行结果，会放在：
+
+- `changes/active/<change>/artifacts/checkpoint/`
+
+## 推荐使用流程
+
+1. 初始化项目：`ospec init .`
+2. 打开 Checkpoint：`ospec plugins enable checkpoint . --base-url <url>`
+3. 配好 `routes.yaml`、`flows.yaml`、登录态和运行环境
+4. 跑一次检查：`ospec plugins doctor checkpoint .`
+5. 创建一个需要自动化验证的 change
+6. 执行检查：`ospec plugins run checkpoint <change-path>`
+7. 检查通过后，再执行 `ospec verify` 和 `ospec finalize`
+
+## 什么时候应该用这个插件
+
+建议在这些 change 上启用或触发 Checkpoint：
+
+- `ui_change`
+- `page_design`
+- `feature_flow`
+- `api_change`
+- `backend_change`
+- `integration_change`
+
+如果只是文案修改或纯文档变更，一般不需要 Checkpoint。
+
+## 下面是详细技术规范
+
 本文档用于固定 OSpec 中 `checkpoint` 插件的目标、运行契约与实施边界，避免后续在多轮讨论、分阶段实现与上下文压缩时丢失关键约束。
 
 后续如果提到：

@@ -15,91 +15,91 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> |
+  <a href="README.md">English</a> |
   <a href="README.zh-CN.md">中文</a> |
-  <a href="README.ja.md">日本語</a>
+  <strong>日本語</strong>
 </p>
 
-OSpec is a document-driven workflow for AI-assisted development, helping you define requirements and changes in docs first, then drive implementation, validation, and archive through AI collaboration.
+OSpec は AI 対話コラボレーション向けのドキュメント駆動開発ワークフローです。最初にドキュメントで要件と変更を明確にし、その後 AI との協調で実装、検証、アーカイブを進めます。
 
 <p align="center">
-  <a href="docs/README.md">Docs</a> |
-  <a href="docs/prompt-guide.md">Prompt Guide</a> |
-  <a href="docs/usage.md">Usage</a> |
-  <a href="docs/project-overview.md">Overview</a> |
-  <a href="docs/installation.md">Installation</a> |
+  <a href="docs/README.ja.md">ドキュメント</a> |
+  <a href="docs/prompt-guide.ja.md">プロンプトガイド</a> |
+  <a href="docs/usage.md">使い方</a> |
+  <a href="docs/project-overview.md">概要</a> |
+  <a href="docs/installation.md">インストール</a> |
   <a href="https://github.com/clawplays/ospec/issues">Issues</a>
 </p>
 
-## Install With npm
+## npm でインストール
 
 ```bash
 npm install -g @clawplays/ospec-cli
 ```
 
-## Recommended Prompts
+## 推奨プロンプト
 
-Most teams only need 3 steps to use OSpec:
+OSpec の利用は、ほとんどの場合この 3 ステップで十分です。
 
-1. initialize OSpec in your project directory
-2. create and advance one change for a requirement, document update, or bug fix
-3. archive the accepted change after deployment and validation are complete
+1. プロジェクトディレクトリで OSpec を初期化する
+2. 要件、ドキュメント更新、バグ修正のための change を作成して進める
+3. 受け入れ完了後にその change をアーカイブする
 
-### 1. Initialize OSpec In Your Project Directory
+### 1. プロジェクトディレクトリで初期化する
 
-Recommended prompt:
+推奨プロンプト:
 
 ```text
-Use OSpec to initialize this project.
+OSpec を使ってこのプロジェクトを初期化してください。
 ```
 
-Claude / Codex skill mode:
+Claude / Codex skill:
 
 ```text
-Use $ospec to initialize this project.
+$ospec を使ってこのプロジェクトを初期化してください。
 ```
 
 <details>
-<summary>Command line</summary>
+<summary>コマンドライン</summary>
 
 ```bash
 ospec init .
 ospec init . --summary "Internal admin portal for operations"
 ospec init . --summary "Internal admin portal for operations" --tech-stack node,react,postgres
-ospec init . --architecture "Single web app with API and shared auth" --document-language en-US
+ospec init . --architecture "Single web app with API and shared auth" --document-language ja-JP
 ```
 
-CLI notes:
+メモ:
 
-- `--summary`: project overview text written into the generated docs
-- `--tech-stack`: comma-separated stack list such as `node,react,postgres`
-- `--architecture`: short architecture description
-- `--document-language`: generated doc language, usually `en-US` or `zh-CN`
-- if you pass these values, OSpec uses them directly when generating project docs
-- if you do not pass them, OSpec reuses existing docs when possible and otherwise creates placeholder docs first
+- `--summary`: 生成ドキュメントに書き込むプロジェクト概要
+- `--tech-stack`: `node,react,postgres` のようなカンマ区切りの技術スタック
+- `--architecture`: 短いアーキテクチャ説明
+- `--document-language`: 生成ドキュメントの言語。通常は `en-US`、`zh-CN`、`ja-JP`
+- 値を渡した場合はその内容を使ってドキュメントを生成します
+- 値を渡さない場合は既存ドキュメントを優先利用し、無ければ補完用のプレースホルダを生成します
 
 </details>
 
-### 2. Create And Advance A Change
+### 2. Change を作成して進める
 
-Use this for requirement delivery, documentation updates, refactors, and bug fixes.
+要件実装、ドキュメント更新、リファクタ、バグ修正はこの流れを使います。
 
-Recommended prompt:
-
-```text
-Use OSpec to create and advance a change for this requirement.
-```
-
-Claude / Codex skill mode:
+推奨プロンプト:
 
 ```text
-Use $ospec-change to create and advance a change for this requirement.
+OSpec を使ってこの要件の change を作成して進めてください。
 ```
 
-![OSpec Change slash command example](docs/assets/ospecchange-slash-command.en.svg)
+Claude / Codex skill:
+
+```text
+$ospec-change を使ってこの要件の change を作成して進めてください。
+```
+
+![OSpec Change slash command example](docs/assets/ospecchange-slash-command.ja.svg)
 
 <details>
-<summary>Command line</summary>
+<summary>コマンドライン</summary>
 
 ```bash
 ospec new docs-homepage-refresh .
@@ -109,39 +109,39 @@ ospec new update-billing-copy .
 
 </details>
 
-### 3. Archive After Acceptance
+### 3. 受け入れ完了後にアーカイブする
 
-After the requirement has passed deployment, testing, QA, or other acceptance checks, archive the validated change.
+デプロイ、テスト、QA、またはその他の受け入れ確認が終わった後に、確認済みの change をアーカイブします。
 
-Recommended prompt:
+推奨プロンプト:
 
 ```text
-Use OSpec to archive this accepted change.
+OSpec を使って承認済みの change をアーカイブしてください。
 ```
 
-Claude / Codex skill mode:
+Claude / Codex skill:
 
 ```text
-Use $ospec to archive this accepted change.
+$ospec を使って承認済みの change をアーカイブしてください。
 ```
 
 <details>
-<summary>Command line</summary>
+<summary>コマンドライン</summary>
 
 ```bash
 ospec verify changes/active/<change-name>
 ospec finalize changes/active/<change-name>
 ```
 
-Archive notes:
+メモ:
 
-- run your project-specific deploy, test, and QA flow first
-- use `ospec verify` to confirm the active change is ready
-- use `ospec finalize` to rebuild indexes and archive the accepted change
+- 先にプロジェクト固有のデプロイ、テスト、QA を実行します
+- `ospec verify` で change がアーカイブ可能か確認します
+- `ospec finalize` でインデックスを再構築し、change をアーカイブします
 
 </details>
 
-## How The OSpec Workflow Works
+## OSpec の動作イメージ
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
@@ -183,47 +183,46 @@ Archive notes:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Core Concepts
+## 3 つの主要概念
 
-| Concept | What It Means |
-|---------|---------------|
-| **Protocol Shell** | The minimum collaboration skeleton: `.skillrc`, `.ospec/`, `changes/`, root `SKILL.md`, `SKILL.index.json`, and `for-ai/` guidance. |
-| **Project Knowledge Layer** | Explicit project context such as `docs/project/*`, layered skill files, and index state that AI can read consistently. |
-| **Active Change** | A dedicated execution container for one requirement, usually with `proposal.md`, `tasks.md`, `state.json`, `verification.md`, and `review.md`. |
+| 概念 | 説明 |
+|------|------|
+| **Protocol Shell** | `.skillrc`、`.ospec/`、`changes/`、ルートの `SKILL.md`、`SKILL.index.json`、`for-ai/` を含む最小の協調骨格 |
+| **Project Knowledge Layer** | `docs/project/*`、レイヤード skill ファイル、index 状態など AI が継続的に参照するコンテキスト |
+| **Active Change** | 1 つの要件専用の実行コンテナ。通常 `proposal.md`、`tasks.md`、`state.json`、`verification.md`、`review.md` を持つ |
 
-## Features
+## 主な機能
 
-- **Change-ready initialization**: `ospec init` creates the protocol shell and baseline project knowledge docs in one pass.
-- **Guided initialization**: AI-assisted init can ask once for missing summary or tech stack; direct CLI init falls back to placeholder docs when context is missing.
-- **Docs maintenance**: `ospec docs generate` refreshes or repairs project knowledge docs when you need it later.
-- **Tracked requirement execution**: each change can keep proposal, tasks, state, verification, and review files aligned.
-- **Queue helpers**: `queue` and `run` support explicit multi-change execution when one active change is not enough.
-- **Plugin workflow gates**: built-in plugin commands support Stitch design review and Checkpoint automation.
-- **Skill management**: install and inspect OSpec skills for Codex and Claude Code.
-- **Standard closeout**: `finalize` verifies, rebuilds indexes, and archives the change before manual Git commit.
+- **change-ready 初期化**: `ospec init` が protocol shell と基礎ドキュメントを一度に生成
+- **ガイド付き初期化**: AI 支援時は不足している概要や技術スタックを 1 回だけ確認可能
+- **ドキュメント保守**: `ospec docs generate` で後から知識レイヤを更新・修復
+- **change 実行の追跡**: proposal、tasks、state、verification、review を継続的に揃える
+- **キュー支援**: `queue` と `run` で複数 change の明示的な実行を管理
+- **プラグインゲート**: Stitch のデザインレビューと Checkpoint の自動化チェックをサポート
+- **標準クローズアウト**: `finalize` が検証、インデックス再構築、アーカイブを行う
 
-## Plugin Features
+## プラグイン機能
 
-OSpec includes two optional plugins that extend the document-driven workflow with UI review and flow validation.
+OSpec には、文書駆動ワークフローに UI レビューとフロー検証を追加する 2 つのオプションプラグインがあります。
 
 ### Stitch
 
-Use Stitch for page design review and preview collaboration, especially for landing pages, marketing pages, and UI-heavy changes.
+Stitch はページデザインレビューとプレビュー共有に使います。ランディングページや UI 変更が多い change に向いています。
 
-AI conversation:
+AI 対話:
 
 ```text
-Use OSpec to enable the Stitch plugin.
+OSpec を使って Stitch プラグインを有効にしてください。
 ```
 
-Claude / Codex skill mode:
+Claude / Codex skill:
 
 ```text
-Use $ospec to enable the Stitch plugin.
+$ospec を使って Stitch プラグインを有効にしてください。
 ```
 
 <details>
-<summary>Command line</summary>
+<summary>コマンドライン</summary>
 
 ```bash
 ospec plugins enable stitch .
@@ -233,39 +232,39 @@ ospec plugins enable stitch .
 
 ### Checkpoint
 
-Use Checkpoint for app flow validation and automated checks, especially for submission flows, critical paths, and pre-acceptance runtime verification.
+Checkpoint は画面フロー検証と自動チェックに使います。重要フローや受け入れ前のランタイム検証に向いています。
 
-AI conversation:
+AI 対話:
 
 ```text
-Use OSpec to enable the Checkpoint plugin.
+OSpec を使って Checkpoint プラグインを有効にしてください。
 ```
 
-Claude / Codex skill mode:
+Claude / Codex skill:
 
 ```text
-Use $ospec to enable the Checkpoint plugin.
+$ospec を使って Checkpoint プラグインを有効にしてください。
 ```
 
 <details>
-<summary>Command line</summary>
+<summary>コマンドライン</summary>
 
 ```bash
 ospec plugins enable checkpoint . --base-url http://127.0.0.1:3000
 ```
 
-Notes:
+メモ:
 
-- `--base-url` points to the running app used by automated checks
+- `--base-url` は自動チェック対象となる起動中アプリの URL を指定します
 
 </details>
 
-## Documentation
+## ドキュメント
 
-### Core Docs
+### コアドキュメント
 
-- [Docs Index](docs/README.md)
-- [Prompt Guide](docs/prompt-guide.md)
+- [Docs Index](docs/README.ja.md)
+- [Prompt Guide](docs/prompt-guide.ja.md)
 - [Usage](docs/usage.md)
 - [Project Overview](docs/project-overview.md)
 - [Installation](docs/installation.md)
@@ -273,19 +272,19 @@ Notes:
 - [GitLab Custom Fork Sync](docs/custom-fork-sync.md)
 - [Upstream Brand Protection](docs/upstream-brand-protection.md)
 
-### Plugin Specs
+### プラグイン仕様
 
 - [Stitch Plugin Spec](docs/stitch-plugin-spec.zh-CN.md)
 - [Checkpoint Plugin Spec](docs/checkpoint-plugin-spec.zh-CN.md)
 
-## Repository Structure
+## リポジトリ構成
 
 ```text
-dist/                       Compiled CLI runtime
-assets/                     Managed protocol assets, hooks, and skill payloads
-docs/                       Public documentation
-scripts/                    Release and installation helpers
-.ospec/templates/hooks/     Hook templates shipped with the package
+dist/                       コンパイル済み CLI ランタイム
+assets/                     管理対象プロトコル資産、hooks、skill payload
+docs/                       公開ドキュメント
+scripts/                    リリースとインストール補助スクリプト
+.ospec/templates/hooks/     パッケージ同梱の Git hook テンプレート
 ```
 
 ## License

@@ -1,5 +1,152 @@
 # Stitch 插件规范文档
 
+这份文档先讲用户怎么用 `stitch`，再保留后面的详细技术规范。
+
+## 先看这个插件是干什么的
+
+`stitch` 用来做页面设计审核与预览协作。
+
+适合的场景：
+
+- 落地页、营销页、活动页
+- UI 变化比较大的页面需求
+- 需要先看设计预览，再决定是否继续推进开发的 change
+
+它的核心作用是：
+
+- 生成或提交页面预览
+- 等待人工审核通过
+- 在审核通过前阻断 `verify / archive / finalize`
+
+## 用户怎么打开这个插件
+
+AI 对话方式：
+
+```text
+使用 OSpec 帮我打开 Stitch 插件。
+```
+
+Skill 方式：
+
+```text
+使用 $ospec 帮我打开 Stitch 插件。
+```
+
+命令行：
+
+```bash
+ospec plugins enable stitch .
+```
+
+## 打开后你还需要配置什么
+
+启用 `stitch` 后，通常还要完成这 3 件事：
+
+1. 选择 provider
+2. 配置 Stitch 认证
+3. 跑一次 doctor，确认本机和项目都准备好了
+
+### 1. 选择 provider
+
+默认 provider 是 `gemini`，也可以切到 `codex`。
+
+大多数用户不需要改 runner，只需要确认 `.skillrc.plugins.stitch.provider` 用的是哪一个即可。
+
+### 2. 配置 Stitch 认证
+
+如果你用 `gemini`：
+
+- 在 `~/.gemini/settings.json` 里配置 `stitch` MCP
+- 配上 `X-Goog-Api-Key`
+
+示例：
+
+```json
+{
+  "mcpServers": {
+    "stitch": {
+      "httpUrl": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "your-stitch-api-key"
+      }
+    }
+  }
+}
+```
+
+如果你用 `codex`：
+
+- 在 `~/.codex/config.toml` 里配置 `stitch` MCP
+- 同样需要 `X-Goog-Api-Key`
+
+示例：
+
+```toml
+[mcp_servers.stitch]
+type = "http"
+url = "https://stitch.googleapis.com/mcp"
+headers = { X-Goog-Api-Key = "your-stitch-api-key" }
+
+[mcp_servers.stitch.http_headers]
+X-Goog-Api-Key = "your-stitch-api-key"
+```
+
+### 3. 跑一次 doctor
+
+```bash
+ospec plugins doctor stitch .
+```
+
+这个命令会帮你检查：
+
+- 插件是否已启用
+- provider 是否配置好
+- 本机 CLI 是否可用
+- Stitch MCP 与认证是否就绪
+
+## 打开后会生成什么
+
+启用后，项目里会出现这些和 Stitch 相关的内容：
+
+- `.skillrc.plugins.stitch`
+- `.ospec/plugins/stitch/project.json`
+- `.ospec/plugins/stitch/exports/`
+- `.ospec/plugins/stitch/baselines/`
+- `.ospec/plugins/stitch/cache/`
+
+真正和某个 change 绑定的审核产物，会放在：
+
+- `changes/active/<change>/artifacts/stitch/`
+
+## 推荐使用流程
+
+1. 初始化项目：`ospec init .`
+2. 打开 Stitch 插件：`ospec plugins enable stitch .`
+3. 配好 provider 与认证：`ospec plugins doctor stitch .`
+4. 创建一个 UI 类 change
+5. 运行 Stitch：`ospec plugins run stitch <change-path>`
+6. 把生成的 `preview_url` 发给审核人
+7. 审核通过后执行：`ospec plugins approve stitch <change-path>`
+8. 再继续 `ospec verify` 和 `ospec finalize`
+
+如果审核不通过，可以执行：
+
+```bash
+ospec plugins reject stitch <change-path>
+```
+
+## 什么时候应该用这个插件
+
+建议在这些 change 上启用或触发 Stitch：
+
+- `ui_change`
+- `page_design`
+- `landing_page`
+
+如果一个 change 主要是后端逻辑、接口调整或数据修复，通常不需要 Stitch。
+
+## 下面是详细技术规范
+
 本文档用于固定 OSpec 中 `stitch` 插件的当前规范、运行契约与扩展边界，避免后续在多轮对话、上下文压缩、分阶段实现时丢失关键约束。
 
 后续如果提到：

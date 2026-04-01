@@ -57,7 +57,7 @@ Claude / Codex Skill 方式：
 使用 $ospec-change 为这个需求创建并推进一个 change。
 ```
 
-![OSpec Change Slash Command 示例](assets/ospecchange-slash-command.svg)
+![OSpec Change Slash Command 示例](assets/ospecchange-slash-command.zh-CN.svg)
 
 等价命令行：
 

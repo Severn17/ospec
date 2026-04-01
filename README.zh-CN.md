@@ -1,10 +1,8 @@
 <h1><a href="https://ospec.ai/" target="_blank" rel="noopener noreferrer">OSpec</a></h1>
 
-[English](README.md)
-
 <p align="center">
   <a href="https://www.npmjs.com/package/@clawplays/ospec-cli"><img src="https://img.shields.io/npm/v/%40clawplays%2Fospec-cli?style=for-the-badge&logo=npm&label=npm" alt="npm"></a>
-  <a href="https://www.npmjs.com/package/@clawplays/ospec-cli"><img src="https://img.shields.io/npm/dm/%40clawplays%2Fospec-cli?style=for-the-badge&logo=npm&label=downloads" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/@clawplays/ospec-cli"><img src="https://img.shields.io/npm/dm/%40clawplays%2Fospec-cli?style=for-the-badge&logo=npm&label=downloads&cacheSeconds=300" alt="npm downloads"></a>
   <a href="https://github.com/clawplays/ospec/stargazers"><img src="https://img.shields.io/github/stars/clawplays/ospec?style=for-the-badge&logo=github" alt="GitHub stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/clawplays/ospec?style=for-the-badge&color=green" alt="License"></a>
 </p>
@@ -14,6 +12,12 @@
   <img src="https://img.shields.io/badge/npm-8%2B-CB3837?style=flat-square&logo=npm&logoColor=white" alt="npm 8+">
   <img src="https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/workflow-3_steps-0F766E?style=flat-square" alt="3-step workflow">
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> |
+  <strong>中文</strong> |
+  <a href="README.ja.md">日本語</a>
 </p>
 
 OSpec 是一个面向 AI 对话协作的文档驱动开发工作流，让你先用文档明确需求与变更，再驱动 AI 实现、验证与归档。
@@ -37,11 +41,11 @@ npm install -g @clawplays/ospec-cli
 
 大多数团队使用 OSpec，只要 3 步：
 
-1. 初始化项目
+1. 在你的项目目录初始化项目
 2. 为文档更新、需求开发或 Bug 修复创建并推进一个 change
 3. 在需求验收通过后归档这个 change
 
-### 1. 初始化项目
+### 1. 在你的项目目录初始化项目
 
 推荐提示词：
 
@@ -92,7 +96,7 @@ Claude / Codex Skill 方式：
 使用 $ospec-change 为这个需求创建并推进一个 change。
 ```
 
-![OSpec Change Slash Command 示例](docs/assets/ospecchange-slash-command.svg)
+![OSpec Change Slash Command 示例](docs/assets/ospecchange-slash-command.zh-CN.svg)
 
 <details>
 <summary>命令行</summary>
@@ -198,6 +202,64 @@ ospec finalize changes/active/<change-name>
 - **skills 管理**：支持 Codex 和 Claude Code 的 OSpec skill 安装与检查。
 - **标准收口路径**：`finalize` 负责验证、重建索引和归档，Git 提交仍保持手动可控。
 
+## 插件功能
+
+OSpec 内置两个可选插件，用来把 UI 审核和流程验证接入到文档驱动交付流程中。
+
+### Stitch
+
+用于页面设计审核与预览协作，适合落地页、营销页和 UI 变化较多的需求。
+
+AI 对话方式：
+
+```text
+使用 OSpec 帮我打开 Stitch 插件。
+```
+
+Claude / Codex Skill 方式：
+
+```text
+使用 $ospec 帮我打开 Stitch 插件。
+```
+
+<details>
+<summary>命令行</summary>
+
+```bash
+ospec plugins enable stitch .
+```
+
+</details>
+
+### Checkpoint
+
+用于应用流程验证与自动化检查，适合提交流程、关键路径和验收前的运行验证。
+
+AI 对话方式：
+
+```text
+使用 OSpec 帮我打开 Checkpoint 插件。
+```
+
+Claude / Codex Skill 方式：
+
+```text
+使用 $ospec 帮我打开 Checkpoint 插件。
+```
+
+<details>
+<summary>命令行</summary>
+
+```bash
+ospec plugins enable checkpoint . --base-url http://127.0.0.1:3000
+```
+
+说明：
+
+- `--base-url` 用来指定运行中的应用地址，供自动化检查使用
+
+</details>
+
 ## 文档入口
 
 ### 核心文档
@@ -211,12 +273,10 @@ ospec finalize changes/active/<change-name>
 - [GitLab 自定义 Fork 同步方案](docs/custom-fork-sync.zh-CN.md)
 - [上游品牌保护说明](docs/upstream-brand-protection.zh-CN.md)
 
-### 高级规范
+### 插件高级说明
 
 - [Stitch 插件规范](docs/stitch-plugin-spec.zh-CN.md)
-- [Stitch 插件路线图](docs/stitch-plugin-roadmap.zh-CN.md)
 - [Checkpoint 插件规范](docs/checkpoint-plugin-spec.zh-CN.md)
-- [当前 Vibe Coding Spec Flow](docs/current-vibe-coding-spec-flow.zh-CN.md)
 
 ## 仓库结构
 

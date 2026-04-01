@@ -57,7 +57,7 @@ Claude / Codex skill form:
 Use $ospec-change to create and advance a change for this requirement.
 ```
 
-![OSpec Change slash command example](assets/ospecchange-slash-command.svg)
+![OSpec Change slash command example](assets/ospecchange-slash-command.en.svg)
 
 Equivalent CLI:
 
