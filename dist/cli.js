@@ -226,6 +226,97 @@ const services_1 = require("./services");
 
 const CLI_VERSION = '0.1.1';
 
+function showInitUsage() {
+    console.log('Usage: ospec init [root-dir] [--summary "..."] [--tech-stack node,react] [--architecture "..."] [--document-language zh-CN|en-US]');
+}
+
+function parseInitCommandArgs(commandArgs) {
+    let rootDir;
+    const options = {};
+    for (let index = 0; index < commandArgs.length; index += 1) {
+        const arg = commandArgs[index];
+        if (arg === '--help' || arg === '-h' || arg === 'help') {
+            showInitUsage();
+            process.exit(0);
+        }
+        if (arg === '--summary') {
+            const value = commandArgs[index + 1];
+            if (!value || value.startsWith('--')) {
+                console.error('Error: --summary requires a value');
+                showInitUsage();
+                process.exit(1);
+            }
+            options.summary = value.trim();
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith('--summary=')) {
+            options.summary = arg.slice('--summary='.length).trim();
+            continue;
+        }
+        if (arg === '--tech-stack') {
+            const value = commandArgs[index + 1];
+            if (!value || value.startsWith('--')) {
+                console.error('Error: --tech-stack requires a comma-separated value');
+                showInitUsage();
+                process.exit(1);
+            }
+            options.techStack = value.split(',').map(item => item.trim()).filter(Boolean);
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith('--tech-stack=')) {
+            options.techStack = arg.slice('--tech-stack='.length).split(',').map(item => item.trim()).filter(Boolean);
+            continue;
+        }
+        if (arg === '--architecture') {
+            const value = commandArgs[index + 1];
+            if (!value || value.startsWith('--')) {
+                console.error('Error: --architecture requires a value');
+                showInitUsage();
+                process.exit(1);
+            }
+            options.architecture = value.trim();
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith('--architecture=')) {
+            options.architecture = arg.slice('--architecture='.length).trim();
+            continue;
+        }
+        if (arg === '--document-language' || arg === '--lang') {
+            const value = commandArgs[index + 1];
+            if (!value || value.startsWith('--')) {
+                console.error('Error: --document-language requires a value');
+                showInitUsage();
+                process.exit(1);
+            }
+            options.documentLanguage = value.trim();
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith('--document-language=')) {
+            options.documentLanguage = arg.slice('--document-language='.length).trim();
+            continue;
+        }
+        if (arg.startsWith('--lang=')) {
+            options.documentLanguage = arg.slice('--lang='.length).trim();
+            continue;
+        }
+        if (!rootDir) {
+            rootDir = arg;
+            continue;
+        }
+        console.error(`Error: unexpected argument "${arg}"`);
+        showInitUsage();
+        process.exit(1);
+    }
+    return {
+        rootDir,
+        options,
+    };
+}
+
 
 
 function parseNewCommandArgs(commandArgs) {
@@ -432,7 +523,9 @@ async function main() {
 
 
 
-                await initCmd.execute(commandArgs[0]);
+                const { rootDir, options } = parseInitCommandArgs(commandArgs);
+
+                await initCmd.execute(rootDir, options);
 
 
 
@@ -927,7 +1020,7 @@ OSpec CLI v${CLI_VERSION}
 Usage: ospec <command> [options]
 
 Commands:
-  init [root-dir]           Initialize the OSpec protocol shell
+  init [root-dir]           Initialize OSpec to a change-ready state
   new <change-name> [root]  Create a new change (supports --flags)
   verify [path]             Verify change completion
   progress [path]           Show workflow progress
@@ -950,6 +1043,7 @@ Commands:
 
 Examples:
   ospec init
+  ospec init . --summary "Internal admin portal" --tech-stack node,react,postgres
   ospec new onboarding-flow
   ospec new landing-refresh . --flags ui_change,page_design
   ospec verify ./changes/active/onboarding-flow

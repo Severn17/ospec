@@ -5,7 +5,7 @@ tags: [cli, workflow, automation, typescript, ospec, bootstrap]
 
 # OSpec CLI
 
-Protocol-shell-first OSpec workflow for initialization, project knowledge backfill, and change execution.
+Protocol-shell-first OSpec workflow for change-ready initialization, execution, validation, archiving, and docs maintenance.
 
 ## Default Entry
 
@@ -14,13 +14,13 @@ When the user says something short like:
 - `使用 ospec 初始化项目`
 - `使用 ospec 初始化这个目录`
 - `use ospec to initialize this directory`
-- `use ospec to inspect and initialize this repo`
+- `use ospec to initialize this repo`
 
 expand it internally as:
 
-1. inspect the target directory
-2. initialize the OSpec protocol shell if needed
-3. explicitly backfill the project knowledge layer only when needed
+1. initialize the repository with `ospec init` so it ends in a change-ready state
+2. if project context is missing and the AI can ask follow-up questions, ask one concise question for project summary or tech stack
+3. if the user declines or the flow is CLI-only, continue with placeholder project docs
 4. create the first change only when explicitly requested
 
 Do not force the user to repeat those steps manually when the request is already clear.
@@ -35,15 +35,16 @@ If the user intent is simply to initialize the project or current directory, tre
 
 Use this exact behavior:
 
-1. run `ospec status [path]`
-2. if the directory is uninitialized or missing protocol-shell assets, run `ospec init [path]`
+1. run `ospec init [path]` when the directory is uninitialized or not yet change-ready
+2. if AI assistance is available and the repository lacks usable project context, ask one concise follow-up for summary or tech stack before init when helpful
 3. verify the actual filesystem result before claiming initialization is complete
+4. stop before `ospec new` unless the user explicitly asks to create a change
 
 Never replace `ospec init` with manual directory creation or a hand-written approximation.
 
-Do not say initialization is complete unless the protocol-shell assets actually exist on disk.
+Do not say initialization is complete unless the managed protocol-shell assets and baseline project knowledge docs actually exist on disk.
 
-Required protocol-shell checks after `ospec init`:
+Required checks after `ospec init`:
 
 - `.skillrc`
 - `.ospec/`
@@ -58,8 +59,13 @@ Required protocol-shell checks after `ospec init`:
 - `for-ai/skill-conventions.md`
 - `for-ai/workflow-conventions.md`
 - `for-ai/development-guide.md`
+- `docs/project/overview.md`
+- `docs/project/tech-stack.md`
+- `docs/project/architecture.md`
+- `docs/project/module-map.md`
+- `docs/project/api-overview.md`
 
-During plain init, do not report `docs/SKILL.md`, `src/SKILL.md`, `tests/SKILL.md`, or business scaffold as if they were part of protocol-shell completion.
+During plain init, do not report `docs/SKILL.md`, `src/SKILL.md`, `tests/SKILL.md`, or business scaffold as if they were part of change-ready completion.
 
 ## Prompt Profiles
 
@@ -70,31 +76,31 @@ Use these prompt styles as the preferred mental model.
 Use when the user already trusts OSpec defaults.
 
 ```text
-Use ospec to initialize this directory.
+Use ospec to initialize this project.
 ```
 
 ### 2. Standard Prompt
 
-Use when you want short prompts but still want anti-drift guardrails.
+Use when you want short prompts and still want OSpec to finish initialization properly.
 
 ```text
-Use ospec to inspect and initialize this directory according to current OSpec rules.
+Use ospec to initialize this project according to current OSpec rules.
 ```
 
-### 3. Guardrail Prompt
+### 3. Guided Init Prompt
 
-Use when the model is likely to over-assume frameworks or over-create assets.
+Use when you want the AI to gather missing context before initialization if needed.
 
 ```text
-Use ospec for this directory. Default to protocol-shell init first, do not assume a web template, do not apply business scaffold during init, and do not create the first change unless explicitly requested.
+Use ospec to initialize this project. If project context is missing, ask me for a short summary or tech stack first. If I skip it, continue with placeholder docs.
 ```
 
-### 4. Knowledge-Backfill Prompt
+### 4. Docs Maintenance Prompt
 
-Use when the protocol shell already exists and the project knowledge layer is still incomplete.
+Use when the repository is already initialized and the project knowledge layer needs a refresh or repair pass.
 
 ```text
-Use ospec to backfill the project knowledge layer for this directory. Focus on docs, layered skills, and index state. Do not create a change yet.
+Use ospec to refresh or repair the project knowledge layer for this directory. Do not create a change yet.
 ```
 
 ### 5. Change-Creation Prompt
@@ -102,7 +108,7 @@ Use ospec to backfill the project knowledge layer for this directory. Focus on d
 Use when the user is explicitly ready to move into execution.
 
 ```text
-Use ospec to create and advance a change for this requirement. Respect the current project state and do not treat bootstrap as auto-change creation.
+Use ospec to create and advance a change for this requirement. Respect the current project state and do not create queue work unless I ask for it.
 ```
 
 ### 6. Queue Prompt
@@ -125,26 +131,26 @@ Use ospec to create a change queue and execute it explicitly with ospec run manu
 
 Always keep these rules:
 
-- `ospec init` creates the protocol shell only
-- `ospec docs generate` backfills project knowledge only
-- when the user asks to initialize, execute the CLI init command and verify the protocol-shell files on disk before declaring success
+- `ospec init` should leave the repository in a change-ready state
+- AI-assisted init may ask one concise follow-up question for missing summary or tech stack; if the user declines, continue with placeholder docs
+- `ospec docs generate` refreshes, repairs, or backfills project knowledge docs after initialization
+- when the user asks to initialize, execute the CLI init command and verify the protocol-shell files and `docs/project/*` files on disk before declaring success
 - do not assume the project is a web or Next.js project unless the repository or user makes that explicit
-- do not apply business scaffold during plain init
-- do not generate `docs/project/bootstrap-summary.md` during plain init or docs generate
+- do not apply business scaffold during plain init or docs maintenance
+- do not generate `docs/project/bootstrap-summary.md`
 - do not create the first change automatically unless the user explicitly asks to create a change
 - do not enter queue mode unless the user explicitly asks for queue behavior
 - treat presets as planning defaults, not as init-time templates
-- use the CLI commands for inspection and progress review, not ad-hoc filesystem edits
+- use the CLI commands for verification, archiving, and targeted inspection instead of ad-hoc filesystem edits
 
 ## What The CLI Manages
 
 This CLI now covers:
 
-- protocol-shell initialization
-- project knowledge backfill
+- change-ready initialization
+- project knowledge maintenance
 - layered skill files
 - execution-layer change workflow
-- CLI inspection
 - preset-based planning defaults
 - explicit business scaffold generation for supported presets
 - Codex and Claude Code skill install and sync checks
@@ -154,6 +160,9 @@ This CLI now covers:
 Treat these as the source of truth for active delivery work:
 
 - `.skillrc`
+- `docs/project/overview.md`
+- `docs/project/tech-stack.md`
+- `docs/project/architecture.md`
 - `changes/active/<change>/proposal.md`
 - `changes/active/<change>/tasks.md`
 - `changes/active/<change>/state.json`
@@ -174,6 +183,7 @@ Do not fall back to the old `features/...` layout unless the target repository r
 ```bash
 ospec status [path]
 ospec init [path]
+ospec init [path] --summary "..." --tech-stack node,react
 ospec docs generate [path]
 ospec new <change-name> [path]
 ospec docs status [path]
@@ -205,7 +215,7 @@ ospec skill status-claude
 ospec skill install-claude
 ```
 
-The default `ospec skill install` and `ospec skill install-claude` commands now install a OSpec skill suite:
+The default `ospec skill install` and `ospec skill install-claude` commands now install an OSpec skill suite:
 
 - `ospec`
 - `ospec-init`
@@ -219,13 +229,15 @@ The default `ospec skill install` and `ospec skill install-claude` commands now 
 Preferred execution order for a new directory:
 
 ```bash
-ospec status [path]
 ospec init [path]
-ospec docs generate [path]
 ospec new <change-name> [path]
+ospec verify [changes/active/<change>]
+ospec finalize [changes/active/<change>]
 ```
 
-For plain init, stop after `ospec init [path]` and verify the protocol-shell assets. Do not silently continue into docs generation unless the user explicitly wants knowledge backfill.
+Use `ospec docs generate [path]` later when you need a docs-only maintenance pass.
+
+Use `ospec status [path]` separately when you want an explicit troubleshooting snapshot.
 
 For completed changes, archive before commit. Use `ospec archive [changes/active/<change>]` to execute the archive and `--check` only when you want a readiness preview without moving files.
 
@@ -235,9 +247,9 @@ For the normal closeout path, prefer `ospec finalize [changes/active/<change>]`.
 
 If the repository type is unclear:
 
-- inspect the real directory first
-- keep initialization minimal
-- allow the project to stay empty except for OSpec protocol assets
+- inspect the real directory only when needed for troubleshooting or context gathering
+- let initialization stay stack-agnostic
+- allow the project to stay minimal except for OSpec-managed assets and baseline project docs
 - let later skills or explicit project-knowledge steps shape the actual stack
 
 This is important because valid OSpec projects include:
@@ -258,36 +270,3 @@ Before saying work is complete:
 2. confirm docs, skills, and index state if project knowledge changed
 3. keep `SKILL.index.json` current after meaningful skill updates
 4. treat `SKILL.index.json` section offsets as LF-normalized so Windows CRLF and Linux LF checkouts do not drift
-
-For this repository itself, also treat these as standard regression checks when behavior changes:
-
-1. `npm run build`
-2. `npm run test:run`
-3. `npm run release:smoke`
-
-## Supported First-Party Presets
-
-If the request matches a supported preset, prefer that preset instead of inventing a new layout in free text.
-
-- `official-site`: official website, docs center, blog/changelog, admin CMS, auth
-- `nextjs-web`: standard Next.js web product with account/auth/API boundaries
-
-Remember: preset choice only supplies planning defaults. It does not turn plain init into template landing.
-
-## Skill Installation
-
-To sync the latest ospec skill into local AI clients, prefer:
-
-1. `ospec skill status`
-2. `ospec skill install` when the Codex package is missing or out of sync
-3. `ospec skill status-claude`
-4. `ospec skill install-claude` when the Claude Code package is missing or out of sync
-
-The default install targets are:
-
-- `~/.codex/skills/ospec`
-- `~/.claude/skills/ospec`
-
-Use `$ospec` as the preferred skill name in prompts.
-
-`$ospec-cli` should only be treated as a legacy compatibility alias.

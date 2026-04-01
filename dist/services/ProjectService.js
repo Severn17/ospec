@@ -2463,7 +2463,23 @@ class ProjectService {
 
 
 
-        const execution = await this.getExecutionStatus(rootDir);
+        let activeChangeCount = 0;
+        if (structure.initialized) {
+            const execution = await this.getExecutionStatus(rootDir);
+            activeChangeCount = execution.totalActiveChanges;
+        }
+        else {
+            const activeDir = path_1.default.join(rootDir, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ACTIVE);
+            if (await this.fileService.exists(activeDir)) {
+                try {
+                    const entries = await fs_extra_1.default.readdir(activeDir, { withFileTypes: true });
+                    activeChangeCount = entries.filter(entry => entry.isDirectory()).length;
+                }
+                catch {
+                    activeChangeCount = 0;
+                }
+            }
+        }
 
 
 
@@ -2527,7 +2543,7 @@ class ProjectService {
 
 
 
-            activeChangeCount: execution.totalActiveChanges,
+            activeChangeCount,
 
 
 
@@ -5114,413 +5130,211 @@ class ProjectService {
 
 
     async getBootstrapUpgradePlan(rootDir) {
-
-
-
-
-
-
-
         const docsRoot = path_1.default.join(rootDir, constants_1.DIR_NAMES.DOCS, constants_1.DIR_NAMES.PROJECT);
-
-
-
-
-
-
-
         const readMarkdown = async (filePath) => {
-
-
-
-
-
-
-
             if (!(await this.fileService.exists(filePath))) {
-
-
-
-
-
-
-
                 return '';
-
-
-
-
-
-
-
             }
-
-
-
-
-
-
-
             try {
-
-
-
-
-
-
-
                 const parsed = (0, gray_matter_1.default)(await this.fileService.readFile(filePath));
-
-
-
-
-
-
-
                 return parsed.content.trim();
-
-
-
-
-
-
-
             }
-
-
-
-
-
-
-
             catch {
-
-
-
-
-
-
-
                 return '';
-
-
-
-
-
-
-
             }
-
-
-
-
-
-
-
         };
-
-
-
-
-
-
-
         const extractBulletList = (content) => content
-
-
-
-
-
-
-
             .split(/\r?\n/)
-
-
-
-
-
-
-
             .map(line => line.trim())
-
-
-
-
-
-
-
             .filter(line => /^-\s+/.test(line))
-
-
-
-
-
-
-
             .map(line => line.replace(/^-\s+/, '').trim())
-
-
-
-
-
-
-
             .filter(Boolean);
-
-
-
-
-
-
-
         const extractParagraph = (content) => content
-
-
-
-
-
-
-
             .split(/\r?\n\r?\n/)
-
-
-
-
-
-
-
             .map(block => block.trim())
-
-
-
-
-
-
-
             .find(block => block && !block.startsWith('#') && !block.startsWith('- '))
-
-
-
-
-
-
-
             ?.replace(/\r?\n/g, ' ')
-
-
-
-
-
-
-
             .trim() || '';
-
-
-
-
-
-
-
-        const [overviewContent, techStackContent, architectureContent] = await Promise.all([
-
-
-
-
-
-
-
+        const [overviewContent, techStackContent, architectureContent, readmeContent, localizedReadmeContent, inferredSummary, inferredTechStack] = await Promise.all([
             readMarkdown(path_1.default.join(docsRoot, 'overview.md')),
-
-
-
-
-
-
-
             readMarkdown(path_1.default.join(docsRoot, 'tech-stack.md')),
-
-
-
-
-
-
-
             readMarkdown(path_1.default.join(docsRoot, 'architecture.md')),
-
-
-
-
-
-
-
+            readMarkdown(path_1.default.join(rootDir, constants_1.FILE_NAMES.README)),
+            readMarkdown(path_1.default.join(rootDir, 'README.zh-CN.md')),
+            this.inferBootstrapSummary(rootDir),
+            this.inferBootstrapTechStack(rootDir),
         ]);
-
-
-
-
-
-
-
+        const summary = extractParagraph(overviewContent) ||
+            extractParagraph(readmeContent) ||
+            extractParagraph(localizedReadmeContent) ||
+            inferredSummary;
+        const explicitTechStack = extractBulletList(techStackContent);
+        const documentLanguage = this.detectDocumentLanguageFromTexts([
+            overviewContent,
+            techStackContent,
+            architectureContent,
+            readmeContent,
+            localizedReadmeContent,
+        ]);
         const modules = await this.inferBootstrapModules(rootDir);
-
-
-
-
-
-
-
         const apiDocs = await this.scanApiDocs(rootDir);
-
-
-
-
-
-
-
         const designDocs = await this.scanDesignDocs(rootDir);
-
-
-
-
-
-
-
         const planningDocs = await this.scanPlanningDocs(rootDir);
-
-
-
-
-
-
-
         return {
-
-
-
-
-
-
-
             projectName: path_1.default.basename(path_1.default.resolve(rootDir)),
-
-
-
-
-
-
-
-            summary: extractParagraph(overviewContent),
-
-
-
-
-
-
-
-            techStack: extractBulletList(techStackContent),
-
-
-
-
-
-
-
+            summary,
+            techStack: explicitTechStack.length > 0 ? explicitTechStack : inferredTechStack,
             architecture: extractParagraph(architectureContent),
-
-
-
-
-
-
-
             modules,
-
-
-
-
-
-
-
             apiAreas: apiDocs
-
-
-
-
-
-
-
                 .filter(item => item.name.toLowerCase() !== 'readme.md')
-
-
-
-
-
-
-
                 .map(item => item.name.replace(/\.md$/i, '').replace(/-/g, ' ')),
-
-
-
-
-
-
-
             designDocs: designDocs
-
-
-
-
-
-
-
                 .filter(item => item.name.toLowerCase() !== 'readme.md')
-
-
-
-
-
-
-
                 .map(item => item.name.replace(/\.md$/i, '').replace(/-/g, ' ')),
-
-
-
-
-
-
-
             planningDocs: planningDocs
-
-
-
-
-
-
-
                 .filter(item => item.name.toLowerCase() !== 'readme.md')
-
-
-
-
-
-
-
                 .map(item => item.name.replace(/\.md$/i, '').replace(/-/g, ' ')),
-
-
-
-
-
-
-
+            documentLanguage,
         };
+    }
 
+    async inferBootstrapSummary(rootDir) {
+        const packageJsonPath = path_1.default.join(rootDir, 'package.json');
+        if (await this.fileService.exists(packageJsonPath)) {
+            try {
+                const packageJson = await this.fileService.readJSON(packageJsonPath);
+                if (typeof packageJson?.description === 'string' && packageJson.description.trim().length > 0) {
+                    return packageJson.description.trim();
+                }
+            }
+            catch {
+            }
+        }
+        const pyprojectPath = path_1.default.join(rootDir, 'pyproject.toml');
+        if (await this.fileService.exists(pyprojectPath)) {
+            try {
+                const content = await this.fileService.readFile(pyprojectPath);
+                const match = content.match(/^\s*description\s*=\s*["'](.+?)["']\s*$/m);
+                if (match?.[1]?.trim()) {
+                    return match[1].trim();
+                }
+            }
+            catch {
+            }
+        }
+        return '';
+    }
 
+    async inferBootstrapTechStack(rootDir) {
+        const stack = new Set();
+        const add = (...items) => {
+            for (const item of items) {
+                if (typeof item === 'string' && item.trim().length > 0) {
+                    stack.add(item.trim());
+                }
+            }
+        };
+        const packageJsonPath = path_1.default.join(rootDir, 'package.json');
+        if (await this.fileService.exists(packageJsonPath)) {
+            add('Node.js');
+            try {
+                const packageJson = await this.fileService.readJSON(packageJsonPath);
+                const deps = {
+                    ...(packageJson?.dependencies || {}),
+                    ...(packageJson?.devDependencies || {}),
+                    ...(packageJson?.peerDependencies || {}),
+                };
+                const depNames = Object.keys(deps);
+                if (depNames.some(name => name === 'typescript' || name.startsWith('@types/'))) {
+                    add('TypeScript');
+                }
+                if (depNames.includes('react')) {
+                    add('React');
+                }
+                if (depNames.includes('next')) {
+                    add('Next.js');
+                }
+                if (depNames.includes('vue')) {
+                    add('Vue');
+                }
+                if (depNames.includes('nuxt') || depNames.includes('nuxt3')) {
+                    add('Nuxt');
+                }
+                if (depNames.includes('svelte')) {
+                    add('Svelte');
+                }
+                if (depNames.includes('astro')) {
+                    add('Astro');
+                }
+                if (depNames.includes('express')) {
+                    add('Express');
+                }
+                if (depNames.includes('@nestjs/core')) {
+                    add('NestJS');
+                }
+                if (depNames.includes('fastify')) {
+                    add('Fastify');
+                }
+                if (depNames.includes('electron')) {
+                    add('Electron');
+                }
+                if (depNames.includes('vite')) {
+                    add('Vite');
+                }
+            }
+            catch {
+            }
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'tsconfig.json'))) {
+            add('TypeScript');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'requirements.txt')) ||
+            await this.fileService.exists(path_1.default.join(rootDir, 'pyproject.toml'))) {
+            add('Python');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'manage.py'))) {
+            add('Django');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'go.mod'))) {
+            add('Go');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'Cargo.toml'))) {
+            add('Rust');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'composer.json'))) {
+            add('PHP');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'Gemfile'))) {
+            add('Ruby');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'pom.xml')) ||
+            await this.fileService.exists(path_1.default.join(rootDir, 'build.gradle')) ||
+            await this.fileService.exists(path_1.default.join(rootDir, 'build.gradle.kts'))) {
+            add('Java');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'pubspec.yaml'))) {
+            add('Dart');
+        }
+        if (await this.fileService.exists(path_1.default.join(rootDir, 'Dockerfile'))) {
+            add('Docker');
+        }
+        return Array.from(stack);
+    }
 
-
-
-
-
+    detectDocumentLanguageFromTexts(contents) {
+        for (const content of contents) {
+            if (typeof content !== 'string' || content.trim().length === 0) {
+                continue;
+            }
+            if (/[一-龥]/.test(content)) {
+                return 'zh-CN';
+            }
+            if (/[A-Za-z]/.test(content)) {
+                return 'en-US';
+            }
+        }
+        return undefined;
     }
 
 

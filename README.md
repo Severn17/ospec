@@ -16,53 +16,79 @@
   <img src="https://img.shields.io/badge/workflow-protocol--shell--first-111827?style=flat-square" alt="Protocol-shell-first workflow">
 </p>
 
-OSpec is an AI-first CLI workflow system for initializing collaboration rules, backfilling project knowledge, and delivering requirements through auditable change containers.
+OSpec is an AI-first CLI workflow system for initializing repositories to a change-ready state and delivering requirements through auditable change containers.
 
 <p align="center">
   <a href="docs/README.md">Docs</a> |
+  <a href="docs/prompt-guide.md">Prompt Guide</a> |
+  <a href="docs/usage.md">Usage</a> |
   <a href="docs/project-overview.md">Overview</a> |
   <a href="docs/installation.md">Installation</a> |
-  <a href="docs/usage.md">Usage</a> |
-  <a href="docs/prompt-guide.md">Prompt Guide</a> |
   <a href="https://github.com/clawplays/ospec/issues">Issues</a>
 </p>
 
-## What's New in v0.1.1
+## Prompt Examples
 
-### Protocol-Shell-First Workflow
+Preferred init prompt:
 
-The main idea in OSpec is simple: do not start by guessing the app stack or generating a pile of business templates. Start by creating the collaboration protocol, then add project knowledge, then execute the requirement in a tracked change container.
+```text
+Use OSpec to initialize this project.
+```
+
+Other common prompts:
+
+```text
+Use OSpec to refresh or repair the project knowledge layer.
+
+Use OSpec to create and advance a change for this requirement.
+
+Use OSpec to break this TODO into multiple changes, create a queue, and show the queue first.
+```
+
+If your AI client supports installed skills, keep init the same short form:
+
+```text
+Use $ospec to initialize this project.
+```
+
+And for other actions:
+
+```text
+Use $ospec-change to create and advance a change for this requirement.
+```
+
+## Protocol-Shell-First Workflow
+
+The main idea in OSpec is simple: do not start by guessing the app stack or generating a pile of business templates. Start by creating the collaboration protocol and baseline project knowledge in one init pass, then execute the requirement in a tracked change container.
 
 ```text
 +--------------------------------------------------------------------------------------+
-| OSpec v0.1.1 - RECOMMENDED DELIVERY FLOW                                             |
+| OSpec - RECOMMENDED DELIVERY FLOW                                                    |
 +--------------------------------------------------------------------------------------+
-| 1. INSPECT                                                                           |
-|    ospec status .                                                                    |
-|    - Check whether the repo is initialized                                           |
-|    - See docs coverage, skills status, and active changes                            |
-|                                                                                      |
-| 2. INITIALIZE                                                                        |
+| 1. INITIALIZE TO CHANGE-READY                                                        |
 |    ospec init .                                                                      |
-|    - Create the protocol shell only                                                  |
-|    - Do not generate a business scaffold by default                                  |
+|    - Create the protocol shell                                                       |
+|    - Reuse existing project docs when available                                      |
+|    - Generate baseline project knowledge docs                                        |
+|    - Ask once for missing summary/tech stack in AI-assisted flows                    |
 |                                                                                      |
-| 3. BACKFILL KNOWLEDGE                                                                |
-|    ospec docs generate .                                                             |
-|    - Add project docs and AI-readable context explicitly                             |
-|                                                                                      |
-| 4. EXECUTE A REQUIREMENT                                                             |
+| 2. EXECUTE A REQUIREMENT                                                             |
 |    ospec new landing-refresh .                                                       |
 |    - Work inside changes/active/<change>/                                            |
 |    - Track proposal, tasks, state, verification, and review                          |
 |                                                                                      |
-| 5. CLOSE OUT                                                                         |
+| 3. DEPLOY + VALIDATE                                                                 |
+|    project deploy / QA / ospec verify                                                |
+|    - Run your project-specific validation flow                                       |
+|    - Confirm the active change is ready to archive                                   |
+|                                                                                      |
+| 4. ARCHIVE THE REQUIREMENT                                                           |
 |    ospec finalize changes/active/landing-refresh                                     |
-|    - Verify, rebuild indexes, archive                                                |
+|    - Rebuild indexes and archive the validated change                                |
 +--------------------------------------------------------------------------------------+
 ```
 
-### How The OSpec Workflow Works
+## How The OSpec Workflow Works
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
@@ -72,36 +98,35 @@ The main idea in OSpec is simple: do not start by guessing the app stack or gene
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  2. PROJECT INSPECTION                                         │
-│     ospec status                                               │
-│     - repo state                                               │
-│     - docs coverage                                            │
-│     - skills / active changes                                  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  3. PROTOCOL SHELL                                             │
+│  2. INIT TO CHANGE-READY                                       │
 │     ospec init                                                 │
 │     - .skillrc                                                 │
 │     - .ospec/                                                  │
 │     - changes/active + changes/archived                        │
 │     - root SKILL files and for-ai guidance                     │
+│     - docs/project/* baseline knowledge docs                   │
+│     - reuse docs or fall back to placeholders                  │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  4. KNOWLEDGE + EXECUTION                                      │
-│     ospec docs generate                                        │
+│  3. EXECUTION                                                  │
 │     ospec new <change-name>                                    │
-│     ospec progress / verify                                    │
+│     ospec progress                                             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  5. CLOSEOUT                                                   │
+│  4. DEPLOY + VALIDATE                                          │
+│     project deploy / test / QA                                 │
+│     ospec verify                                               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  5. ARCHIVE                                                    │
 │     ospec finalize                                             │
-│     verify + rebuild index + archive                           │
+│     rebuild index + archive                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -115,8 +140,9 @@ The main idea in OSpec is simple: do not start by guessing the app stack or gene
 
 ## Features
 
-- **Protocol-shell-first initialization**: `ospec init` creates the collaboration runtime before business scaffolding.
-- **Explicit project backfill**: `ospec docs generate` adds project knowledge only when you want it.
+- **Change-ready initialization**: `ospec init` creates the protocol shell and baseline project knowledge docs in one pass.
+- **Guided initialization**: AI-assisted init can ask once for missing summary or tech stack; direct CLI init falls back to placeholder docs when context is missing.
+- **Docs maintenance**: `ospec docs generate` refreshes or repairs project knowledge docs when you need it later.
 - **Tracked requirement execution**: each change can keep proposal, tasks, state, verification, and review files aligned.
 - **Queue helpers**: `queue` and `run` support explicit multi-change execution when one active change is not enough.
 - **Plugin workflow gates**: built-in plugin commands support Stitch design review and Checkpoint automation.
@@ -151,21 +177,24 @@ ospec --version
 ### Standard Flow
 
 ```bash
-# 1. Inspect the repository
-ospec status .
-
-# 2. Initialize the protocol shell
+# 1. Initialize the repository to change-ready state
 ospec init .
 
-# 3. Backfill project docs when needed
-ospec docs generate .
-
-# 4. Create a change for one requirement
+# 2. Create a change for one requirement
 ospec new landing-refresh .
 
-# 5. Inspect progress and close it out
-ospec progress changes/active/landing-refresh
+# 3. Deploy and validate the change
+# Run your project deploy / test / QA commands here
+ospec verify changes/active/landing-refresh
+
+# 4. Archive the validated change
 ospec finalize changes/active/landing-refresh
+```
+
+### Refresh Knowledge Docs Later
+
+```bash
+ospec docs generate .
 ```
 
 ### Queue Flow
@@ -184,25 +213,6 @@ ospec run step .
 ospec plugins status .
 ospec plugins enable stitch .
 ospec plugins enable checkpoint . --base-url http://127.0.0.1:3000
-```
-
-## Prompt Examples
-
-```text
-Use OSpec to initialize this project.
-
-Use OSpec to backfill the project knowledge layer.
-
-Use OSpec to create and advance a change for this requirement.
-
-Use OSpec to break this TODO into multiple changes, create a queue, and show the queue first.
-```
-
-If your AI client supports installed skills, prefer the installed OSpec skill name used in your environment, for example `$ospec` or `$ospec-change`:
-
-```text
-Use $ospec to initialize this project.
-Use $ospec-change to create and advance a change for this requirement.
 ```
 
 ## Skills
@@ -228,10 +238,10 @@ ospec skill install-claude ospec-init
 ### Core Docs
 
 - [Docs Index](docs/README.md)
+- [Prompt Guide](docs/prompt-guide.md)
+- [Usage](docs/usage.md)
 - [Project Overview](docs/project-overview.md)
 - [Installation](docs/installation.md)
-- [Usage](docs/usage.md)
-- [Prompt Guide](docs/prompt-guide.md)
 - [Skills Installation](docs/skills-installation.md)
 - [GitLab Custom Fork Sync](docs/custom-fork-sync.md)
 - [Upstream Brand Protection](docs/upstream-brand-protection.md)

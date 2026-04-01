@@ -4,26 +4,35 @@
 
 Prompt OSpec with short intent, not with long internal checklists.
 
-OSpec should expand the required init, inspection, and change rules internally.
+OSpec should expand the inspection, initialization, docs-maintenance, and change rules internally.
 
 ## Recommended Prompts
 
 ### Initialize A Project
 
+Preferred default:
+
 ```text
 Use OSpec to initialize this project.
 ```
 
-### Initialize The Workflow Framework
+What this should imply:
+
+- run `ospec init` so the repo ends in change-ready state
+- the user does not need to ask for `ospec status` first
+- ask one concise follow-up for project summary or tech stack only when AI assistance is available and project context is missing
+- if the user skips that context, continue with placeholder docs instead of blocking init
+
+### Optional: Include Known Context In The Same Prompt
 
 ```text
-Use OSpec to initialize the workflow framework for this project.
+Use OSpec to initialize this project. It is an internal admin portal built with Node.js, React, and PostgreSQL.
 ```
 
-### Backfill The Knowledge Layer
+### Refresh The Knowledge Layer Later
 
 ```text
-Use OSpec to backfill the project knowledge layer.
+Use OSpec to refresh or repair the project knowledge layer.
 ```
 
 ### Start A Requirement
@@ -68,7 +77,7 @@ When your AI client supports OSpec skills, prefer the skill name directly:
 
 ```text
 Use $ospec to initialize this project.
-Use $ospec to backfill the project knowledge layer.
+Use $ospec to refresh or repair the project knowledge layer.
 Use $ospec to inspect active changes and progress.
 Use $ospec to break this TODO into multiple changes, create a queue, and show the queue first.
 Use $ospec to create a change queue and execute it explicitly with ospec run manual-safe.

@@ -8,22 +8,40 @@ class StatusCommand extends BaseCommand_1.BaseCommand {
         try {
             const targetPath = projectPath || process.cwd();
             this.logger.info(`Getting status for ${targetPath}`);
-            const [structure, summary, docs, skills, execution, changes, queuedChanges, runReport] = await Promise.all([
-                services_1.services.projectService.detectProjectStructure(targetPath),
+            const structure = await services_1.services.projectService.detectProjectStructure(targetPath);
+            const [summary, docs, skills, queuedChanges] = await Promise.all([
                 services_1.services.projectService.getProjectSummary(targetPath),
                 services_1.services.projectService.getDocsStatus(targetPath),
                 services_1.services.projectService.getSkillsStatus(targetPath),
-                services_1.services.projectService.getExecutionStatus(targetPath),
-                services_1.services.projectService.getActiveChangeStatusReport(targetPath),
                 services_1.services.queueService.getQueuedChanges(targetPath),
-                services_1.services.runService.getStatusReport(targetPath),
             ]);
+            let execution = {
+                totalActiveChanges: summary.activeChangeCount,
+                byStatus: {},
+                activeChanges: [],
+            };
+            let changes = {
+                totals: { pass: 0, warn: 0, fail: 0 },
+            };
+            let runReport = {
+                currentRun: undefined,
+                stage: undefined,
+                nextInstruction: undefined,
+            };
+            if (structure.initialized) {
+                [execution, changes, runReport] = await Promise.all([
+                    services_1.services.projectService.getExecutionStatus(targetPath),
+                    services_1.services.projectService.getActiveChangeStatusReport(targetPath),
+                    services_1.services.runService.getStatusReport(targetPath),
+                ]);
+            }
             console.log('\nProject Status');
             console.log('==============\n');
             console.log(`Name: ${summary.name}`);
             console.log(`Path: ${summary.path}`);
             console.log(`Mode: ${summary.mode ?? 'uninitialized'}`);
             console.log(`Initialized: ${summary.initialized ? 'yes' : 'no'}`);
+            console.log(`Change Ready: ${summary.initialized && docs.missingRequired.length === 0 ? 'yes' : 'no'}`);
             console.log(`Structure Level: ${summary.structureLevel}`);
             console.log(`Active Changes: ${summary.activeChangeCount}`);
             console.log(`Queued Changes: ${queuedChanges.length}`);
@@ -104,13 +122,14 @@ class StatusCommand extends BaseCommand_1.BaseCommand {
     getRecommendedNextSteps(projectPath, structure, docs, execution, queuedChanges, runReport) {
         if (!structure.initialized) {
             return [
-                `Run "ospec init ${projectPath}" to initialize the OSpec protocol shell.`,
+                `Run "ospec init ${projectPath}" to initialize the repository to a change-ready state.`,
             ];
         }
         if (docs.missingRequired.length > 0 || docs.coverage < 100) {
             return [
-                'The OSpec protocol shell is ready, but the project knowledge layer is still incomplete.',
-                `Run "ospec docs generate ${projectPath}" to backfill the default project knowledge layer. This still will not apply business scaffold or generate docs/project/bootstrap-summary.md.`,
+                'The repository is initialized, but the project knowledge layer is still incomplete.',
+                `Run "ospec init ${projectPath}" to reconcile the repository back to change-ready state and regenerate missing project knowledge docs.`,
+                `If you only want to refresh or repair docs without rerunning full init messaging, use "ospec docs generate ${projectPath}".`,
             ];
         }
         if (execution.totalActiveChanges === 0 && queuedChanges.length === 0) {

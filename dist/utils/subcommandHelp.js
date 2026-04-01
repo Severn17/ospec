@@ -19,7 +19,7 @@ function getDocsHelpText() {
     return `
 Docs Commands:
   ospec docs status [path]    - show project docs coverage and missing items
-  ospec docs generate [path]  - explicitly backfill the project knowledge layer after protocol-shell init
+  ospec docs generate [path]  - refresh, repair, or backfill the project knowledge layer after initialization
                                - does not create business scaffold or docs/project/bootstrap-summary.md
   ospec docs sync-protocol [path] - refresh protocol/AI adopted docs for an existing project
                                    - affects future work only; does not migrate existing changes

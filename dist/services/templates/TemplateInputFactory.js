@@ -89,20 +89,28 @@ class TemplateInputFactory {
         const presetPlanningDocs = (presetDefaults?.planningDocs ?? []).map(item => item.trim()).filter(Boolean);
         const presetSummary = presetDefaults?.summary?.trim();
         const presetArchitecture = presetDefaults?.architecture?.trim();
+        const documentLanguage = this.normalizeDocumentLanguage(input?.documentLanguage);
+        const placeholderText = documentLanguage === 'en-US' ? 'TBD' : '待补充';
+        const defaultSummary = documentLanguage === 'en-US'
+            ? `${fallbackName} has been initialized with OSpec and is ready for change-based delivery. Fill in the missing project context as the repository becomes clearer.`
+            : `${fallbackName} 已通过 OSpec 初始化，当前已具备按 change 推进交付的基础条件。请继续补充缺失的项目上下文。`;
+        const defaultArchitecture = documentLanguage === 'en-US'
+            ? 'OSpec initialized the protocol shell and baseline project knowledge docs. Refine the architecture details as the repository direction becomes clearer.'
+            : 'OSpec 已初始化协议壳和基础项目知识文档，后续可结合仓库实际方向继续细化架构。';
         const projectName = normalizedInputProjectName || fallbackName;
         const summary = normalizedInputSummary ||
             presetSummary ||
-            `${fallbackName} 已通过 OSpec 初始化，当前处于项目知识层搭建阶段。`;
+            defaultSummary;
         const techStack = normalizedInputTechStack.length > 0
             ? Array.from(new Set(normalizedInputTechStack))
             : inferredTechStack.length > 0
                 ? Array.from(new Set(inferredTechStack))
                 : presetTechStack.length > 0
                     ? Array.from(new Set(presetTechStack))
-                    : ['待补充'];
+                    : [placeholderText];
         const architecture = normalizedInputArchitecture ||
             presetArchitecture ||
-            '当前先建立项目知识层、分层技能层和执行层骨架，后续继续细化架构。';
+            defaultArchitecture;
         const modules = normalizedInputModules.length > 0
             ? Array.from(new Set(normalizedInputModules))
             : inferredModules.length > 0
@@ -116,22 +124,21 @@ class TemplateInputFactory {
                 ? Array.from(new Set(inferredApiAreas))
                 : presetApiAreas.length > 0
                     ? Array.from(new Set(presetApiAreas))
-                    : ['待补充'];
+                    : [placeholderText];
         const designDocs = normalizedInputDesignDocs.length > 0
             ? Array.from(new Set(normalizedInputDesignDocs))
             : inferredDesignDocs.length > 0
                 ? Array.from(new Set(inferredDesignDocs))
                 : presetDesignDocs.length > 0
                     ? Array.from(new Set(presetDesignDocs))
-                    : ['待补充'];
+                    : [placeholderText];
         const planningDocs = normalizedInputPlanningDocs.length > 0
             ? Array.from(new Set(normalizedInputPlanningDocs))
             : inferredPlanningDocs.length > 0
                 ? Array.from(new Set(inferredPlanningDocs))
                 : presetPlanningDocs.length > 0
                     ? Array.from(new Set(presetPlanningDocs))
-                    : ['待补充'];
-        const documentLanguage = this.normalizeDocumentLanguage(input?.documentLanguage);
+                    : [placeholderText];
         const executeScaffoldCommands = Boolean(input?.executeScaffoldCommands);
         const fieldSources = {
             projectName: normalizedInputProjectName ? 'user' : 'placeholder',

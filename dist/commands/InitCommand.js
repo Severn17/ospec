@@ -38,22 +38,35 @@ const path = __importStar(require("path"));
 const services_1 = require("../services");
 const BaseCommand_1 = require("./BaseCommand");
 class InitCommand extends BaseCommand_1.BaseCommand {
-    async execute(rootDir) {
+    async execute(rootDir, input = {}) {
         try {
             const targetDir = rootDir || process.cwd();
             this.logger.info(`Initializing OSpec project at ${targetDir}`);
             const structure = await services_1.services.projectService.detectProjectStructure(targetDir);
-            if (structure.initialized) {
-                this.warn('Project already initialized');
-                return;
+            let protocolShellCreated = false;
+            if (!structure.initialized) {
+                const config = await services_1.services.configManager.createDefaultConfig('full');
+                await services_1.services.projectService.initializeProtocolShellProject(targetDir, config.mode, {
+                    projectName: path.basename(targetDir),
+                    ...input,
+                });
+                protocolShellCreated = true;
             }
-            const config = await services_1.services.configManager.createDefaultConfig('full');
-            await services_1.services.projectService.initializeProtocolShellProject(targetDir, config.mode, {
-                projectName: path.basename(targetDir),
-            });
-            this.success(`${structure.initialized ? 'Protocol shell refreshed' : 'Protocol shell initialized'} at ${targetDir}`);
-            this.info(`  Created OSpec protocol shell for ${path.basename(targetDir)}`);
-            this.info('  Added .skillrc, changes/, .ospec/, for-ai protocol docs, root SKILL.md, and SKILL.index.json');
+            else {
+                this.info('  Protocol shell already present; reconciling the repository to a change-ready state');
+            }
+            const result = await services_1.services.projectService.generateProjectKnowledge(targetDir, input);
+            this.success(`Project initialized to change-ready state at ${targetDir}`);
+            this.info(`  Protocol shell: ${protocolShellCreated ? 'created' : 'already present'}`);
+            this.info(`  Project knowledge: ${result.createdFiles.length} created, ${result.refreshedFiles.length} refreshed, ${result.skippedFiles.length} skipped`);
+            this.info(`  Document language: ${result.documentLanguage}`);
+            if (input.summary || (Array.isArray(input.techStack) && input.techStack.length > 0) || input.architecture) {
+                this.info('  Applied user-provided project context to the generated knowledge docs');
+            }
+            if (result.firstChangeSuggestion) {
+                this.info(`  Suggested first change: ${result.firstChangeSuggestion.name}`);
+            }
+            this.info(`  Next: ospec new <change-name> ${targetDir}`);
         }
         catch (error) {
             this.error(`Failed to initialize project: ${error}`);
