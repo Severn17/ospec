@@ -3,7 +3,7 @@ name: Publish npm Package
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "*.*.*"
 
 permissions:
   contents: read
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          if [ "v${PACKAGE_VERSION}" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match package.json version v${PACKAGE_VERSION}"
+          if [ "${PACKAGE_VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${PACKAGE_VERSION}"
             exit 1
           fi
 
@@ -41,5 +41,19 @@ jobs:
       - name: Verify package contents
         run: npm run release:check
 
+      - name: Check whether version already exists on npm
+        id: npm_version
+        shell: bash
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "Version ${PACKAGE_VERSION} is already published. Skipping npm publish."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish package to npm
+        if: steps.npm_version.outputs.published != 'true'
         run: npm publish --access public

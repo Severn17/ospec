@@ -8,7 +8,7 @@ npm publishing is automated by GitHub Actions in [`.github/workflows/publish-npm
 
 Normal pushes to `main` do not publish.
 
-Only a pushed version tag such as `v0.3.1` triggers a release.
+Only a pushed version tag such as `0.3.1` triggers a release.
 
 ## Standard Release Flow
 
@@ -67,15 +67,15 @@ npm run release:smoke
 After the version bump is committed on `main`, create and push the matching tag:
 
 ```bash
-git tag vX.Y.Z
-git push origin vX.Y.Z
+git tag X.Y.Z
+git push origin X.Y.Z
 ```
 
 Example:
 
 ```bash
-git tag v0.3.1
-git push origin v0.3.1
+git tag 0.3.1
+git push origin 0.3.1
 ```
 
 The workflow rejects the release if the Git tag does not exactly match `package.json`.
