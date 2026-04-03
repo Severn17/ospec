@@ -113,7 +113,7 @@ ospec run step [path]
 如果是已经初始化过的项目：
 
 ```bash
-npm install -g @clawplays/ospec-cli@0.3.5
+npm install -g @clawplays/ospec-cli@0.3.6
 ospec update [path]
 ```
 
