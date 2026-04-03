@@ -18,8 +18,14 @@ class UpdateCommand extends BaseCommand_1.BaseCommand {
         const protocolResult = await services_1.services.projectService.syncProtocolGuidance(targetPath);
         const toolingResult = await this.syncProjectTooling(targetPath, protocolResult.documentLanguage);
         const pluginResult = await this.syncEnabledPluginAssets(targetPath);
+        const archiveResult = await this.syncArchiveLayout(targetPath);
         const skillResult = await this.syncInstalledSkills();
-        const refreshedFiles = [...protocolResult.refreshedFiles, ...toolingResult.refreshedFiles, ...pluginResult.refreshedFiles];
+        const refreshedFiles = Array.from(new Set([
+            ...protocolResult.refreshedFiles,
+            ...toolingResult.refreshedFiles,
+            ...pluginResult.refreshedFiles,
+            ...(archiveResult.configSaved ? ['.skillrc'] : []),
+        ]));
         const createdFiles = [...protocolResult.createdFiles, ...toolingResult.createdFiles, ...pluginResult.createdFiles];
         const skippedFiles = [...protocolResult.skippedFiles, ...toolingResult.skippedFiles, ...pluginResult.skippedFiles];
         this.success(`Updated OSpec assets for ${protocolResult.projectName}`);
@@ -40,8 +46,14 @@ class UpdateCommand extends BaseCommand_1.BaseCommand {
         if (pluginResult.configSaved) {
             this.info('  plugin config normalized: .skillrc');
         }
-        this.info('  note: update refreshes protocol docs, tooling, hooks, managed skills, and managed assets for already-enabled plugins');
-        this.info('  note: it does not enable, disable, or migrate existing changes automatically');
+        if (archiveResult.configSaved) {
+            this.info('  archive layout normalized: .skillrc');
+        }
+        if (archiveResult.migratedChanges.length > 0) {
+            this.info(`  archived changes migrated: ${archiveResult.migratedChanges.length}`);
+        }
+        this.info('  note: update refreshes protocol docs, tooling, hooks, managed skills, managed assets for already-enabled plugins, and the archive layout when needed');
+        this.info('  note: it does not enable, disable, or migrate active or queued changes automatically');
     }
     async syncProjectTooling(rootDir, documentLanguage) {
         const toolingPaths = [
@@ -221,6 +233,100 @@ class UpdateCommand extends BaseCommand_1.BaseCommand {
             }
         }
         return { createdFiles, skippedFiles };
+    }
+    async syncArchiveLayout(rootDir) {
+        const rawConfig = await services_1.services.fileService.readJSON((0, path_1.join)(rootDir, '.skillrc'));
+        const config = await services_1.services.configManager.loadConfig(rootDir);
+        const nextConfig = JSON.parse(JSON.stringify(config));
+        const archivedRoot = (0, path_1.join)(rootDir, 'changes', 'archived');
+        const migratedChanges = [];
+        if (await services_1.services.fileService.exists(archivedRoot)) {
+            const entryNames = (await services_1.services.fileService.readDir(archivedRoot)).sort((left, right) => left.localeCompare(right));
+            for (const entryName of entryNames) {
+                const entryPath = (0, path_1.join)(archivedRoot, entryName);
+                const stat = await services_1.services.fileService.stat(entryPath);
+                if (!stat.isDirectory()) {
+                    continue;
+                }
+                const parsed = this.parseLegacyArchiveDirName(entryName);
+                if (!parsed) {
+                    continue;
+                }
+                const archivedState = await this.readArchivedChangeState(entryPath);
+                if (!archivedState) {
+                    continue;
+                }
+                const archiveDayRoot = (0, path_1.join)(archivedRoot, parsed.month, parsed.day);
+                await services_1.services.fileService.ensureDir(archiveDayRoot);
+                const targetPath = await this.resolveArchiveMigrationTarget(archiveDayRoot, archivedState.feature);
+                await services_1.services.fileService.move(entryPath, targetPath);
+                migratedChanges.push({
+                    from: `changes/archived/${entryName}`,
+                    to: this.toRelativePath(rootDir, targetPath),
+                });
+            }
+        }
+        let configSaved = false;
+        if (nextConfig.archive?.layout !== 'month-day') {
+            nextConfig.archive = {
+                ...(nextConfig.archive || {}),
+                layout: 'month-day',
+            };
+            await services_1.services.configManager.saveConfig(rootDir, nextConfig);
+            configSaved = true;
+        }
+        else if (!rawConfig?.archive || rawConfig.archive.layout !== 'month-day') {
+            await services_1.services.configManager.saveConfig(rootDir, nextConfig);
+            configSaved = true;
+        }
+        return {
+            configSaved,
+            migratedChanges,
+        };
+    }
+    parseLegacyArchiveDirName(entryName) {
+        const match = /^(\d{4}-\d{2}-\d{2})-(.+)$/.exec(entryName);
+        if (!match) {
+            return null;
+        }
+        return {
+            month: match[1].slice(0, 7),
+            day: match[1],
+            leafName: match[2],
+        };
+    }
+    async resolveArchiveMigrationTarget(archiveDayRoot, leafName) {
+        let candidate = leafName;
+        let index = 2;
+        while (await services_1.services.fileService.exists((0, path_1.join)(archiveDayRoot, candidate))) {
+            candidate = `${leafName}-${index}`;
+            index += 1;
+        }
+        return (0, path_1.join)(archiveDayRoot, candidate);
+    }
+    async readArchivedChangeState(entryPath) {
+        const statePath = (0, path_1.join)(entryPath, 'state.json');
+        if (!(await services_1.services.fileService.exists(statePath))) {
+            return null;
+        }
+        try {
+            const state = await services_1.services.fileService.readJSON(statePath);
+            if (typeof state?.feature !== 'string' || state.feature.trim().length === 0) {
+                return null;
+            }
+            if (state.status !== 'archived') {
+                return null;
+            }
+            return {
+                feature: state.feature.trim(),
+            };
+        }
+        catch {
+            return null;
+        }
+    }
+    toRelativePath(rootDir, targetPath) {
+        return (0, path_1.relative)(rootDir, targetPath).replace(/\\/g, '/');
     }
     getManagedSkillNames() {
         return ['ospec', 'ospec-change'];

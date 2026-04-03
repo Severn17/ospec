@@ -4385,6 +4385,14 @@ class ProjectService {
 
 
 
+        const config = await this.configManager.loadConfig(projectRoot);
+
+
+
+
+
+
+
         const archivedRoot = path_1.default.join(projectRoot, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ARCHIVED);
 
 
@@ -4401,71 +4409,7 @@ class ProjectService {
 
 
 
-        const datePrefix = new Date().toISOString().slice(0, 10);
-
-
-
-
-
-
-
-        const baseName = `${datePrefix}-${featureState.feature}`;
-
-
-
-
-
-
-
-        let archiveDirName = baseName;
-
-
-
-
-
-
-
-        let archiveIndex = 2;
-
-
-
-
-
-
-
-        while (await this.fileService.exists(path_1.default.join(archivedRoot, archiveDirName))) {
-
-
-
-
-
-
-
-            archiveDirName = `${baseName}-${archiveIndex}`;
-
-
-
-
-
-
-
-            archiveIndex += 1;
-
-
-
-
-
-
-
-        }
-
-
-
-
-
-
-
-        const archivePath = path_1.default.join(archivedRoot, archiveDirName);
+        const archivePath = await this.resolveArchivePath(archivedRoot, featureState.feature, config);
 
 
 
@@ -12444,6 +12388,252 @@ ${formatSuggestion()}
     }
 
 
+
+
+
+
+
+    async resolveArchivePath(archivedRoot, featureName, config) {
+
+
+
+
+
+        const archiveLayout = config?.archive?.layout === 'month-day' ? 'month-day' : 'flat';
+
+
+
+
+
+        const archiveDate = this.getLocalArchiveDateParts();
+
+
+
+
+
+        if (archiveLayout === 'month-day') {
+
+
+
+
+
+            const archiveDayRoot = path_1.default.join(archivedRoot, archiveDate.month, archiveDate.day);
+
+
+
+
+
+            await this.fileService.ensureDir(archiveDayRoot);
+
+
+
+
+
+            const archiveLeafName = await this.resolveArchiveLeafName(archiveDayRoot, featureName);
+
+
+
+
+
+            return path_1.default.join(archiveDayRoot, archiveLeafName);
+
+
+
+
+
+        }
+
+
+
+
+
+        const archiveDirName = await this.resolveLegacyArchiveDirName(archivedRoot, archiveDate.day, featureName);
+
+
+
+
+
+        return path_1.default.join(archivedRoot, archiveDirName);
+
+
+
+
+
+    }
+
+
+
+
+
+    async resolveArchiveLeafName(archiveDayRoot, featureName) {
+
+
+
+
+
+        let candidate = featureName;
+
+
+
+
+
+        let archiveIndex = 2;
+
+
+
+
+
+        while (await this.fileService.exists(path_1.default.join(archiveDayRoot, candidate))) {
+
+
+
+
+
+            candidate = `${featureName}-${archiveIndex}`;
+
+
+
+
+
+            archiveIndex += 1;
+
+
+
+
+
+        }
+
+
+
+
+
+        return candidate;
+
+
+
+
+
+    }
+
+
+
+
+
+    async resolveLegacyArchiveDirName(archivedRoot, archiveDay, featureName) {
+
+
+
+
+
+        const baseName = `${archiveDay}-${featureName}`;
+
+
+
+
+
+        let candidate = baseName;
+
+
+
+
+
+        let archiveIndex = 2;
+
+
+
+
+
+        while (await this.fileService.exists(path_1.default.join(archivedRoot, candidate))) {
+
+
+
+
+
+            candidate = `${baseName}-${archiveIndex}`;
+
+
+
+
+
+            archiveIndex += 1;
+
+
+
+
+
+        }
+
+
+
+
+
+        return candidate;
+
+
+
+
+
+    }
+
+
+
+
+
+    getLocalArchiveDateParts() {
+
+
+
+
+
+        const now = new Date();
+
+
+
+
+
+        const year = String(now.getFullYear());
+
+
+
+
+
+        const monthNumber = String(now.getMonth() + 1).padStart(2, '0');
+
+
+
+
+
+        const dayNumber = String(now.getDate()).padStart(2, '0');
+
+
+
+
+
+        return {
+
+
+
+
+
+            month: `${year}-${monthNumber}`,
+
+
+
+
+
+            day: `${year}-${monthNumber}-${dayNumber}`,
+
+
+
+
+
+        };
+
+
+
+
+
+    }
 
 
 

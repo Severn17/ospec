@@ -180,7 +180,7 @@ class ArchiveCommand extends BaseCommand_1.BaseCommand {
                     this.success('Change is ready to archive');
                     return;
                 }
-                const archivePath = await this.performArchive(targetPath, projectRoot, featureState);
+                const archivePath = await this.performArchive(targetPath, projectRoot, featureState, config);
                 this.success(`Change archived to ${archivePath}`);
                 return archivePath;
             }
@@ -194,11 +194,10 @@ class ArchiveCommand extends BaseCommand_1.BaseCommand {
             throw error;
         }
     }
-    async performArchive(targetPath, projectRoot, featureState) {
+    async performArchive(targetPath, projectRoot, featureState, config) {
         const archivedRoot = path.join(projectRoot, constants_1.DIR_NAMES.CHANGES, constants_1.DIR_NAMES.ARCHIVED);
         await services_1.services.fileService.ensureDir(archivedRoot);
-        const archiveDirName = await this.resolveArchiveDirName(archivedRoot, featureState.feature);
-        const archivePath = path.join(archivedRoot, archiveDirName);
+        const archivePath = await this.resolveArchivePath(archivedRoot, featureState.feature, config);
         const nextState = {
             ...featureState,
             status: 'archived',
@@ -222,9 +221,29 @@ class ArchiveCommand extends BaseCommand_1.BaseCommand {
         proposal.data.status = status;
         await services_1.services.fileService.writeFile(proposalPath, gray_matter_1.default.stringify(proposal.content, proposal.data));
     }
-    async resolveArchiveDirName(archivedRoot, featureName) {
-        const datePrefix = new Date().toISOString().slice(0, 10);
-        const baseName = `${datePrefix}-${featureName}`;
+    async resolveArchivePath(archivedRoot, featureName, config) {
+        const archiveLayout = config?.archive?.layout === 'month-day' ? 'month-day' : 'flat';
+        const archiveDate = this.getLocalArchiveDateParts();
+        if (archiveLayout === 'month-day') {
+            const archiveDayRoot = path.join(archivedRoot, archiveDate.month, archiveDate.day);
+            await services_1.services.fileService.ensureDir(archiveDayRoot);
+            const archiveLeafName = await this.resolveArchiveLeafName(archiveDayRoot, featureName);
+            return path.join(archiveDayRoot, archiveLeafName);
+        }
+        const archiveDirName = await this.resolveLegacyArchiveDirName(archivedRoot, archiveDate.day, featureName);
+        return path.join(archivedRoot, archiveDirName);
+    }
+    async resolveArchiveLeafName(archiveDayRoot, featureName) {
+        let candidate = featureName;
+        let index = 2;
+        while (await services_1.services.fileService.exists(path.join(archiveDayRoot, candidate))) {
+            candidate = `${featureName}-${index}`;
+            index += 1;
+        }
+        return candidate;
+    }
+    async resolveLegacyArchiveDirName(archivedRoot, archiveDay, featureName) {
+        const baseName = `${archiveDay}-${featureName}`;
         let candidate = baseName;
         let index = 2;
         while (await services_1.services.fileService.exists(path.join(archivedRoot, candidate))) {
@@ -232,6 +251,16 @@ class ArchiveCommand extends BaseCommand_1.BaseCommand {
             index += 1;
         }
         return candidate;
+    }
+    getLocalArchiveDateParts() {
+        const now = new Date();
+        const year = String(now.getFullYear());
+        const monthNumber = String(now.getMonth() + 1).padStart(2, '0');
+        const dayNumber = String(now.getDate()).padStart(2, '0');
+        return {
+            month: `${year}-${monthNumber}`,
+            day: `${year}-${monthNumber}-${dayNumber}`,
+        };
     }
     toRelativePath(rootDir, targetPath) {
         return path.relative(rootDir, targetPath).replace(/\\/g, '/');

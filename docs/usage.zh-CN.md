@@ -113,7 +113,7 @@ ospec run step [path]
 如果是已经初始化过的项目：
 
 ```bash
-npm install -g @clawplays/ospec-cli@0.3.4
+npm install -g @clawplays/ospec-cli@0.3.5
 ospec update [path]
 ```
 
@@ -130,11 +130,12 @@ ospec update [path]
 - 刷新项目 tooling 与 Git hooks
 - 同步托管安装的 `ospec` 与 `ospec-change` skills
 - 刷新已启用插件的托管工作目录资产
+- 把旧的 `changes/archived/YYYY-MM-DD-change-name` 归档迁移到新的 `changes/archived/YYYY-MM/YYYY-MM-DD/change-name` 布局
 
 `ospec update [path]` 不会：
 
 - 自动启用或停用插件
-- 自动把已有 active changes 迁移到新的插件工作流
+- 自动迁移已有 active changes 或 queued changes
 - 自动替你完成 Stitch 审批或补建插件产物
 
 如果老项目还缺项目知识文档，可以直接重新执行：

@@ -350,13 +350,59 @@ class RunService {
         if (!(await this.fileService.exists(archivedDir))) {
             return null;
         }
+        const candidatePaths = await this.listArchivedChangeDirectories(archivedDir);
+        const matches = [];
+        for (const candidatePath of candidatePaths) {
+            const statePath = path_1.default.join(candidatePath, constants_1.FILE_NAMES.STATE);
+            if (!(await this.fileService.exists(statePath))) {
+                continue;
+            }
+            try {
+                const state = await this.fileService.readJSON(statePath);
+                if (state?.feature === changeName && state?.status === 'archived') {
+                    matches.push(this.toArchivedRelativePath(archivedDir, candidatePath));
+                }
+            }
+            catch {
+                continue;
+            }
+        }
+        return matches.sort().at(-1) || null;
+    }
+    async listArchivedChangeDirectories(archivedDir) {
         const entries = await fs_extra_1.default.readdir(archivedDir, { withFileTypes: true });
-        const matched = entries
-            .filter(entry => entry.isDirectory() && entry.name.endsWith(`-${changeName}`))
-            .map(entry => entry.name)
-            .sort()
-            .at(-1);
-        return matched ? `changes/archived/${matched}` : null;
+        const candidates = [];
+        for (const entry of entries) {
+            if (!entry.isDirectory()) {
+                continue;
+            }
+            const entryPath = path_1.default.join(archivedDir, entry.name);
+            if (/^\d{4}-\d{2}-\d{2}-.+/.test(entry.name)) {
+                candidates.push(entryPath);
+                continue;
+            }
+            if (!/^\d{4}-\d{2}$/.test(entry.name)) {
+                continue;
+            }
+            const dayEntries = await fs_extra_1.default.readdir(entryPath, { withFileTypes: true });
+            for (const dayEntry of dayEntries) {
+                if (!dayEntry.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(dayEntry.name)) {
+                    continue;
+                }
+                const dayPath = path_1.default.join(entryPath, dayEntry.name);
+                const changeEntries = await fs_extra_1.default.readdir(dayPath, { withFileTypes: true });
+                for (const changeEntry of changeEntries) {
+                    if (changeEntry.isDirectory()) {
+                        candidates.push(path_1.default.join(dayPath, changeEntry.name));
+                    }
+                }
+            }
+        }
+        return candidates;
+    }
+    toArchivedRelativePath(archivedDir, candidatePath) {
+        const relativePath = path_1.default.relative(archivedDir, candidatePath).replace(/\\/g, '/');
+        return `changes/archived/${relativePath}`;
     }
     async ensureRunDirectories(rootDir) {
         await Promise.all([

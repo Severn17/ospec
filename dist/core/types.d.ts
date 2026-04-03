@@ -89,6 +89,9 @@ export interface CheckpointPluginConfig {
         auto_pass_stitch_review: boolean;
     };
 }
+export interface ArchiveConfig {
+    layout: 'flat' | 'month-day';
+}
 export interface SkillrcConfig {
     version: string;
     mode: ProjectMode;
@@ -104,6 +107,7 @@ export interface SkillrcConfig {
         include?: string[];
         exclude?: string[];
     };
+    archive?: ArchiveConfig;
     plugins?: {
         stitch?: StitchPluginConfig;
         checkpoint?: CheckpointPluginConfig;

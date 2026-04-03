@@ -81,6 +81,9 @@ class ConfigManager {
             index: {
                 exclude: ['node_modules/**', 'dist/**', '*.test.*'],
             },
+            archive: {
+                layout: 'month-day',
+            },
             plugins: this.createDefaultPluginsConfig(),
             workflow,
         };
@@ -345,6 +348,7 @@ class ConfigManager {
     }
     normalizeConfig(config) {
         const mode = ['lite', 'standard', 'full'].includes(config.mode) ? config.mode : 'full';
+        const archive = config.archive && typeof config.archive === 'object' ? config.archive : {};
         const hooks = config.hooks || {
             'pre-commit': true,
             'post-merge': true,
@@ -370,6 +374,9 @@ class ConfigManager {
             version: config.version === '3.0' ? '4.0' : config.version,
             mode,
             documentLanguage: this.normalizeDocumentLanguage(config.documentLanguage),
+            archive: {
+                layout: archive.layout === 'month-day' ? 'month-day' : 'flat',
+            },
             hooks: {
                 ...normalizedHooks,
                 ...(legacyWarnDefaults

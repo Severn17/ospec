@@ -37,6 +37,12 @@ OSpec is a document-driven workflow for AI-assisted development, helping you def
 npm install -g @clawplays/ospec-cli
 ```
 
+Update inside your project directory:
+
+```bash
+ospec update
+```
+
 ## Recommended Prompts
 
 Most teams only need 3 steps to use OSpec:
@@ -141,6 +147,7 @@ Archive notes:
 - run your project-specific deploy, test, and QA flow first
 - use `ospec verify` to confirm the active change is ready
 - use `ospec finalize` to rebuild indexes and archive the accepted change
+- new projects archive under `changes/archived/YYYY-MM/YYYY-MM-DD/<change-name>`; existing flat archives are reorganized by `ospec update`
 
 </details>
 
