@@ -112,6 +112,18 @@ function assertContains(output, expected, label) {
 
 
 
+function assertNotContains(output, unexpected, label) {
+
+  if (output.includes(unexpected)) {
+
+    throw new Error(`Expected ${label} to exclude "${unexpected}"\nActual output:\n${output}`);
+
+  }
+
+}
+
+
+
 function toPosixRelative(from, to) {
 
   return path.relative(from, to).replace(/\\/g, '/');
@@ -412,7 +424,13 @@ async function main() {
 
     assertContains(await fs.readFile(proposalPath, 'utf8'), activeOverviewLink, 'proposal link');
 
-    assertContains(await fs.readFile(tasksPath, 'utf8'), activeOverviewLink, 'tasks link');
+    const tasksContent = await fs.readFile(tasksPath, 'utf8');
+
+    assertContains(tasksContent, activeOverviewLink, 'tasks link');
+
+    assertContains(tasksContent, '- [ ] Implement the change', 'tasks checklist format');
+
+    assertNotContains(tasksContent, '- [ ] 1.', 'tasks hybrid checklist numbering');
 
     assertContains(await fs.readFile(verificationPath, 'utf8'), activeOverviewLink, 'verification link');
 
