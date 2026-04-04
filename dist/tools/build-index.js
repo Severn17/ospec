@@ -4,7 +4,6 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const matter = require('gray-matter');
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'changes', 'for-ai']);
 const INDEX_FILE = 'SKILL.index.json';
@@ -469,7 +468,7 @@ function analyzeWorkflowChecklistDocument(content, options) {
 
   if (hasFrontmatter) {
     try {
-      parsed = matter(content);
+      parsed = parseFrontmatter(content, { strict: true });
     } catch (error) {
       parseError = error;
     }
@@ -484,8 +483,8 @@ function analyzeWorkflowChecklistDocument(content, options) {
   const missingActivatedSteps = optionalStepsFieldValid
     ? options.activatedSteps.filter(step => !optionalSteps.includes(step))
     : [...options.activatedSteps];
-  const checklistItems = parsed?.content.match(/^\s*-\s+\[(?: |x|X)\]\s+.+$/gm) ?? [];
-  const uncheckedItems = parsed?.content.match(/^\s*-\s+\[ \]\s+.+$/gm) ?? [];
+  const checklistItems = parsed?.body.match(/^\s*-\s+\[(?: |x|X)\]\s+.+$/gm) ?? [];
+  const uncheckedItems = parsed?.body.match(/^\s*-\s+\[ \]\s+.+$/gm) ?? [];
   const checklistStructureValid = checklistItems.length > 0;
 
   let frontmatterMessage = `${options.name} frontmatter parsed successfully`;
@@ -553,40 +552,61 @@ function normalizeLineEndings(content) {
   return String(content || '').replace(/\r\n?/g, '\n');
 }
 
-function parseFrontmatter(content) {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+function parseFrontmatter(content, options = {}) {
+  const normalizedContent = normalizeLineEndings(content);
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
   if (!match) {
-    return { data: {}, body: content };
+    return { data: {}, body: normalizedContent };
   }
 
   const data = {};
-  const lines = match[1].split(/\r?\n/);
+  const lines = match[1].split('\n');
   let currentKey = null;
 
-  for (const line of lines) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const lineNumber = index + 1;
+    const trimmed = line.trim();
+
+    if (trimmed === '' || trimmed.startsWith('#')) {
+      continue;
+    }
+
     if (/^\s*-\s+/.test(line) && currentKey) {
       if (!Array.isArray(data[currentKey])) {
         data[currentKey] = [];
       }
-      data[currentKey].push(parseValue(line.replace(/^\s*-\s+/, '').trim()));
+      data[currentKey].push(
+        parseValue(line.replace(/^\s*-\s+/, '').trim(), options, {
+          key: currentKey,
+          lineNumber,
+        })
+      );
       continue;
+    }
+
+    if (/^\s*-\s+/.test(line) && options.strict) {
+      throw createFrontmatterParseError('Unexpected list item outside an array field', lineNumber);
     }
 
     const keyMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
     if (!keyMatch) {
+      if (options.strict) {
+        throw createFrontmatterParseError(`Invalid frontmatter line: ${trimmed}`, lineNumber);
+      }
       currentKey = null;
       continue;
     }
 
     const key = keyMatch[1];
     const rawValue = keyMatch[2].trim();
-    data[key] = parseValue(rawValue);
+    data[key] = parseValue(rawValue, options, { key, lineNumber });
     currentKey = Array.isArray(data[key]) && rawValue === '' ? key : null;
   }
 
   return {
     data,
-    body: content.slice(match[0].length),
+    body: normalizedContent.slice(match[0].length),
   };
 }
 
@@ -609,7 +629,7 @@ function isValidFrontmatterField(value, type) {
   return false;
 }
 
-function parseValue(rawValue) {
+function parseValue(rawValue, options = {}, context = {}) {
   if (rawValue === '') {
     return [];
   }
@@ -622,23 +642,100 @@ function parseValue(rawValue) {
   if (rawValue === 'false') {
     return false;
   }
+  if (options.strict) {
+    validateFrontmatterValue(rawValue, context);
+  }
   if (/^\[(.*)\]$/.test(rawValue)) {
     const inner = rawValue.slice(1, -1).trim();
     if (!inner) {
       return [];
     }
 
-    return inner
-      .split(',')
-      .map(item => stripQuotes(item.trim()))
-      .filter(Boolean);
+    return splitInlineArray(inner, options, context);
   }
 
   return stripQuotes(rawValue);
 }
 
+function validateFrontmatterValue(rawValue, context) {
+  const startsArray = rawValue.startsWith('[');
+  const endsArray = rawValue.endsWith(']');
+  if (startsArray !== endsArray) {
+    throw createFrontmatterParseError(
+      `Unterminated inline array for ${context.key || 'field'}`,
+      context.lineNumber
+    );
+  }
+
+  if (!rawValue) {
+    return;
+  }
+
+  const quote = rawValue[0];
+  if ((quote === '"' || quote === "'") && rawValue[rawValue.length - 1] !== quote) {
+    throw createFrontmatterParseError(
+      `Unterminated quoted string for ${context.key || 'field'}`,
+      context.lineNumber
+    );
+  }
+}
+
+function splitInlineArray(inner, options = {}, context = {}) {
+  const values = [];
+  let current = '';
+  let activeQuote = null;
+
+  for (let index = 0; index < inner.length; index += 1) {
+    const char = inner[index];
+    if (activeQuote) {
+      current += char;
+      if (char === activeQuote && inner[index - 1] !== '\\') {
+        activeQuote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      activeQuote = char;
+      current += char;
+      continue;
+    }
+
+    if (char === ',') {
+      const parsed = parseValue(current.trim(), {}, context);
+      if (parsed !== '') {
+        values.push(parsed);
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (activeQuote && options.strict) {
+    throw createFrontmatterParseError(
+      `Unterminated quoted string in inline array for ${context.key || 'field'}`,
+      context.lineNumber
+    );
+  }
+
+  const parsed = parseValue(current.trim(), {}, context);
+  if (parsed !== '') {
+    values.push(parsed);
+  }
+
+  return values.filter(value => value !== '');
+}
+
 function stripQuotes(value) {
   return value.replace(/^['"]|['"]$/g, '');
+}
+
+function createFrontmatterParseError(message, lineNumber) {
+  const error = new Error(lineNumber ? `line ${lineNumber}: ${message}` : message);
+  error.name = 'FrontmatterParseError';
+  return error;
 }
 
 function extractSections(content) {

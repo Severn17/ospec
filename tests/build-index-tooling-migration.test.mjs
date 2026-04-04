@@ -27,6 +27,13 @@ function runCommand(command, args, cwd) {
   return result;
 }
 
+function runManagedBuildIndex(projectRoot, event = 'pre-commit') {
+  return spawnSync('node', [path.join('.ospec', 'tools', 'build-index-auto.cjs'), 'hook-check', event], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
+}
+
 function getLegacyHookContent(event) {
   return [
     '#!/bin/sh',
@@ -96,6 +103,22 @@ describe('build index tooling migration', () => {
     expect(installedHook).toContain('.ospec/tools/build-index-auto.cjs');
   });
 
+  it('runs the initialized managed build-index script without host package dependencies', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const projectRoot = trackTempDir(await fs.mkdtemp(path.join(os.tmpdir(), 'ospec-build-index-self-contained-init-')));
+    await initializeProject(projectRoot, { git: true });
+
+    const result = runManagedBuildIndex(projectRoot);
+    const output = `${result.stdout || ''}${result.stderr || ''}`;
+
+    expect(result.status).toBe(0);
+    expect(output).not.toContain('Cannot find module');
+    expect(output).not.toContain('gray-matter');
+  });
+
   it('migrates legacy root build-index-auto.cjs into .ospec/tools during update', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -136,6 +159,28 @@ describe('build index tooling migration', () => {
     expect(templateHook).toContain('OSPEC_BUILD_INDEX_SCRIPT=".ospec/tools/build-index-auto.cjs"');
     expect(installedHook).toMatch(/if \[ -f "\.ospec\/tools\/build-index-auto\.cjs" \]/);
     expect(installedHook).toContain('OSPEC_BUILD_INDEX_SCRIPT=".ospec/tools/build-index-auto.cjs"');
+  });
+
+  it('keeps the migrated managed build-index script self-contained after update', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const projectRoot = trackTempDir(await fs.mkdtemp(path.join(os.tmpdir(), 'ospec-build-index-self-contained-update-')));
+    await initializeProject(projectRoot, { git: true });
+
+    const managedScriptPath = path.join(projectRoot, '.ospec', 'tools', 'build-index-auto.cjs');
+    const legacyScriptPath = path.join(projectRoot, 'build-index-auto.cjs');
+
+    await fs.move(managedScriptPath, legacyScriptPath);
+    await updateProject(projectRoot);
+
+    const result = runManagedBuildIndex(projectRoot);
+    const output = `${result.stdout || ''}${result.stderr || ''}`;
+
+    expect(result.status).toBe(0);
+    expect(output).not.toContain('Cannot find module');
+    expect(output).not.toContain('gray-matter');
   });
 
   it('migrates legacy root build-index-auto.js into .ospec/tools during update', async () => {
