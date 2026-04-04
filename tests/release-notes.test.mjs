@@ -58,10 +58,14 @@ describe('release notes generation', () => {
     expect(category).toBe('docs');
   });
 
+  it('prefers the GitHub repository URL over homepage metadata for compare links', () => {
+    expect(releaseNotes.resolveRepositoryUrl()).toBe('https://github.com/clawplays/ospec');
+  });
+
   it('creates fallback metadata when no local override is present', async () => {
     const metadata = await releaseNotes.createReleaseMetadata({
-      tag: '0.3.9',
-      previousTag: '0.3.8',
+      tag: '7.7.7',
+      previousTag: '7.7.6',
       repositoryUrl: 'https://github.com/clawplays/ospec',
       commits: [
         {
@@ -78,7 +82,7 @@ describe('release notes generation', () => {
     });
 
     expect(metadata.source).toBe('fallback');
-    expect(metadata.name).toContain('0.3.9 -');
+    expect(metadata.name).toContain('7.7.7 -');
     expect(metadata.body).toContain('## New');
     expect(metadata.body).toContain('## Fixed');
     expect(metadata.body).toContain('## Upgrade');

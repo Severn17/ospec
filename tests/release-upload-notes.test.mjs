@@ -19,6 +19,10 @@ describe('release upload notes helpers', () => {
     });
   });
 
+  it('prefers the GitHub repository URL over homepage metadata for uploads', () => {
+    expect(releaseUploadNotes.resolveRepositoryUrl()).toBe('https://github.com/clawplays/ospec');
+  });
+
   it('reads the local release metadata file for upload', () => {
     fs.mkdirSync(path.dirname(metadataPath), { recursive: true });
     fs.writeFileSync(

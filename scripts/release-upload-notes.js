@@ -80,9 +80,9 @@ function normalizeRepoUrl(url) {
 
 function resolveRepositoryUrl() {
   const candidates = [
-    packageJson.homepage,
     typeof packageJson.repository === 'string' ? packageJson.repository : packageJson.repository?.url,
     packageJson.bugs?.url,
+    packageJson.homepage,
   ];
 
   for (const candidate of candidates) {
