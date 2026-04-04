@@ -118,6 +118,8 @@ npm install -g @clawplays/ospec-cli@0.3.9
 ospec update [path]
 ```
 
+这里升级的是官方 CLI 包 `@clawplays/ospec-cli`，对应命令仍然是 `ospec`。
+
 如果你是从当前仓库本地安装：
 
 ```bash

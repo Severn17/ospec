@@ -1,5 +1,7 @@
 # Installation
 
+Install the official OSpec CLI package `@clawplays/ospec-cli` and run the `ospec` command.
+
 ## Requirements
 
 - Node.js `>= 18`
@@ -10,6 +12,8 @@
 ```bash
 npm install -g @clawplays/ospec-cli
 ```
+
+OSpec supports spec-driven development (SDD) and document-driven development for AI coding agents and CLI workflows.
 
 ## Verify
 

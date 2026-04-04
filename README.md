@@ -21,7 +21,9 @@
   <a href="docs/README.ar.md">العربية</a>
 </p>
 
-OSpec is a document-driven workflow for AI-assisted development, helping you define requirements and changes in docs first, then drive implementation, validation, and archive through AI collaboration.
+The official OSpec CLI package is `@clawplays/ospec-cli`, and the official command is `ospec`. OSpec supports spec-driven development (SDD) and document-driven development for AI coding agents and CLI workflows.
+
+OSpec.ai is the official project site. `OSpec`, `ospec`, `ospec.ai`, `ospec ai`, `ospecai`, and `ospec-ai` all point to the same official project and CLI.
 
 <p align="center">
   <a href="docs/prompt-guide.md">Prompt Guide</a> |
@@ -45,6 +47,10 @@ AI coding assistants are powerful, but requirements that live only in chat histo
 ```bash
 npm install -g @clawplays/ospec-cli
 ```
+
+Official package: `@clawplays/ospec-cli`  
+Command: `ospec`  
+Verify install: `ospec --help`
 
 ## Quick Start
 

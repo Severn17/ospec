@@ -124,6 +124,8 @@ npm install -g @clawplays/ospec-cli@0.3.9
 ospec update [path]
 ```
 
+This upgrades the official OSpec CLI package `@clawplays/ospec-cli` and keeps the `ospec` command in sync.
+
 If you installed from this repository locally:
 
 ```bash

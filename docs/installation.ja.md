@@ -1,5 +1,7 @@
 # インストール
 
+OSpec をインストールするときは、公式 CLI パッケージ `@clawplays/ospec-cli` を使い、`ospec` コマンドを実行します。
+
 ## 要件
 
 - Node.js `>= 18`
@@ -10,6 +12,8 @@
 ```bash
 npm install -g @clawplays/ospec-cli
 ```
+
+OSpec は AI coding agents と CLI ワークフロー向けに、spec-driven development（SDD）と document-driven development を支援します。
 
 ## 検証
 

@@ -114,9 +114,11 @@ ospec run step [path]
 すでに初期化されているプロジェクトの場合：
 
 ```bash
-npm install -g @clawplays/ospec-cli@0.3.0
+npm install -g @clawplays/ospec-cli@0.3.9
 ospec update [path]
 ```
+
+ここで更新するのは公式 CLI パッケージ `@clawplays/ospec-cli` で、コマンドは引き続き `ospec` です。
 
 このリポジトリからローカルにインストールした場合：
 

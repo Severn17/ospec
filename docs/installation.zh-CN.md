@@ -1,5 +1,7 @@
 # 安装说明
 
+安装 OSpec 时，请使用官方 CLI 包 `@clawplays/ospec-cli` 并运行 `ospec` 命令。
+
 ## 环境要求
 
 - Node.js `>= 18`
@@ -10,6 +12,8 @@
 ```bash
 npm install -g @clawplays/ospec-cli
 ```
+
+OSpec 面向 AI coding agents 和 CLI 工作流，支持 spec-driven development（SDD）与文档驱动开发。
 
 ## 安装后验证
 

@@ -1,7 +1,7 @@
 {
   "name": "@clawplays/ospec-cli",
   "version": "0.3.9",
-  "description": "CLI tool for enforcing ospec workflow",
+  "description": "Official OSpec CLI package for spec-driven development (SDD) and document-driven development in AI coding agent and CLI workflows.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -38,16 +38,19 @@
   },
   "keywords": [
     "ospec",
-    "workflow",
-    "cli",
-    "automation"
+    "ospec-cli",
+    "spec-driven development",
+    "sdd",
+    "document-driven development",
+    "ai coding agents",
+    "cli workflows"
   ],
   "author": "clawplays <ai@clawplays.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/clawplays/ospec.git"
   },
-  "homepage": "https://github.com/clawplays/ospec",
+  "homepage": "https://ospec.ai/",
   "bugs": {
     "url": "https://github.com/clawplays/ospec/issues"
   },

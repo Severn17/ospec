@@ -103,9 +103,11 @@ ospec run step [path]
 لمشروع تم تهيئته بالفعل:
 
 ```bash
-npm install -g @clawplays/ospec-cli@0.3.0
+npm install -g @clawplays/ospec-cli@0.3.9
 ospec update [path]
 ```
+
+يقوم هذا الأمر بترقية حزمة CLI الرسمية `@clawplays/ospec-cli`، ويظل الأمر هو `ospec`.
 
 سيقوم `ospec update [path]` بـ:
 

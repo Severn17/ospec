@@ -2,7 +2,7 @@
 
 ## What OSpec Is
 
-OSpec is a document-driven workflow for AI-assisted development, helping you define requirements and changes in docs first, then drive implementation, validation, and archive through AI collaboration.
+The official OSpec CLI package is `@clawplays/ospec-cli`, and the official command is `ospec`. OSpec supports spec-driven development (SDD) and document-driven development for AI coding agents and CLI workflows.
 
 It treats docs as the source of truth for requirements and changes. Initialization sets up collaboration rules and baseline project knowledge first, then lets AI drive implementation through explicit change containers.
 
@@ -28,8 +28,6 @@ It treats docs as the source of truth for requirements and changes. Initializati
 Compared with [Spec Kit](https://github.github.com/spec-kit/) — Spec Kit emphasizes executable specifications, richer planning phases, and multi-step refinement. OSpec keeps a thinner change container and a shorter default path to delivery and archive.
 
 Compared with [Kiro](https://kiro.dev/docs/specs/) — Kiro combines specs with steering, hooks, MCP, and powers inside a broader platform. OSpec focuses on a repo-native workflow layer that stays portable across the assistants you already use.
-
-Compared with [OpenSpec](https://github.com/Fission-AI/OpenSpec) — OpenSpec uses an artifact-guided workflow with `/opsx` commands, proposal/specs/design/tasks artifacts, and broad tool integrations. OSpec keeps the default workflow smaller and centers one explicit active change plus a standard `verify -> finalize` closeout path.
 
 ## Current Capabilities
 
