@@ -11080,197 +11080,103 @@ ${formatSuggestion()}
 
 
         const content = await this.fileService.readFile(filePath);
-
-
-
-
-
-
-
-        const parsed = (0, gray_matter_1.default)(content);
-
-
-
-
-
-
-
-        const optionalSteps = Array.isArray(parsed.data.optional_steps) ? parsed.data.optional_steps : [];
-
-
-
-
-
-
-
-        const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-
-
-
-
-
-
-
-        const checklistComplete = !/- \[ \]/.test(content);
-
-
-
-
-
-
-
+        const hasFrontmatter = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(content);
+        let parsed = null;
+        let parseError = null;
+        if (hasFrontmatter) {
+            try {
+                parsed = (0, gray_matter_1.default)(content);
+            }
+            catch (error) {
+                parseError = error;
+            }
+        }
+        const data = parsed?.data ?? {};
+        const optionalStepsFieldValid = Array.isArray(data.optional_steps);
+        const optionalSteps = optionalStepsFieldValid ? data.optional_steps : [];
+        const createdFieldValid = (typeof data.created === 'string' && data.created.trim().length > 0) ||
+            (data.created instanceof Date && !Number.isNaN(data.created.getTime()));
+        const missingRequiredFields = [];
+        if (typeof data.feature !== 'string' || data.feature.trim().length === 0) {
+            missingRequiredFields.push('feature');
+        }
+        if (!createdFieldValid) {
+            missingRequiredFields.push('created');
+        }
+        if (!optionalStepsFieldValid) {
+            missingRequiredFields.push('optional_steps');
+        }
+        const missing = optionalStepsFieldValid
+            ? activatedSteps.filter(step => !optionalSteps.includes(step))
+            : [...activatedSteps];
+        const checklistItems = parsed?.content.match(/^\s*-\s+\[(?: |x|X)\]\s+.+$/gm) ?? [];
+        const uncheckedItems = parsed?.content.match(/^\s*-\s+\[ \]\s+.+$/gm) ?? [];
+        const checklistStructureValid = checklistItems.length > 0;
+        const checklistComplete = hasFrontmatter &&
+            parseError === null &&
+            missingRequiredFields.length === 0 &&
+            checklistStructureValid &&
+            uncheckedItems.length === 0;
+        let frontmatterMessage = `${name} frontmatter parsed successfully`;
+        if (!hasFrontmatter) {
+            frontmatterMessage = `${name} is missing a valid frontmatter block`;
+        }
+        else if (parseError) {
+            frontmatterMessage = `${name} frontmatter cannot be parsed: ${parseError.message}`;
+        }
+        let requiredFieldsMessage = `${name} has all required frontmatter fields`;
+        if (!hasFrontmatter || parseError) {
+            requiredFieldsMessage = `Cannot validate required fields in ${name} because frontmatter is invalid`;
+        }
+        else if (missingRequiredFields.length > 0) {
+            requiredFieldsMessage = `Missing or invalid required fields in ${name}: ${missingRequiredFields.join(', ')}`;
+        }
+        let optionalStepsMessage = `All activated optional steps are present in ${name}`;
+        if (!optionalStepsFieldValid) {
+            optionalStepsMessage = `${name} frontmatter field optional_steps must be an array`;
+        }
+        else if (missing.length > 0) {
+            optionalStepsMessage = `Missing optional steps in ${name}: ${missing.join(', ')}`;
+        }
+        let checklistStatus = 'pass';
+        let checklistMessage = `${name} checklist is complete`;
+        if (!hasFrontmatter || parseError) {
+            checklistStatus = 'fail';
+            checklistMessage = `${name} checklist cannot be validated because frontmatter is invalid`;
+        }
+        else if (!checklistStructureValid) {
+            checklistStatus = 'fail';
+            checklistMessage = `${name} must contain at least one Markdown checklist item`;
+        }
+        else if (uncheckedItems.length > 0) {
+            checklistStatus = 'warn';
+            checklistMessage = `${name} still has unchecked items`;
+        }
         return {
-
-
-
-
-
-
-
             optionalSteps,
-
-
-
-
-
-
-
             checklistComplete,
-
-
-
-
-
-
-
             checks: [
-
-
-
-
-
-
-
                 {
-
-
-
-
-
-
-
+                    name: `${name}.frontmatter`,
+                    status: hasFrontmatter && parseError === null ? 'pass' : 'fail',
+                    message: frontmatterMessage,
+                },
+                {
+                    name: `${name}.required_fields`,
+                    status: hasFrontmatter && parseError === null && missingRequiredFields.length === 0 ? 'pass' : 'fail',
+                    message: requiredFieldsMessage,
+                },
+                {
                     name: `${name}.optional_steps`,
-
-
-
-
-
-
-
-                    status: missing.length === 0 ? 'pass' : 'fail',
-
-
-
-
-
-
-
-                    message: missing.length === 0
-
-
-
-
-
-
-
-                        ? `All activated optional steps are present in ${name}`
-
-
-
-
-
-
-
-                        : `Missing optional steps in ${name}: ${missing.join(', ')}`,
-
-
-
-
-
-
-
+                    status: optionalStepsFieldValid && missing.length === 0 ? 'pass' : 'fail',
+                    message: optionalStepsMessage,
                 },
-
-
-
-
-
-
-
                 {
-
-
-
-
-
-
-
                     name: `${name}.checklist`,
-
-
-
-
-
-
-
-                    status: checklistComplete ? 'pass' : 'warn',
-
-
-
-
-
-
-
-                    message: checklistComplete
-
-
-
-
-
-
-
-                        ? `${name} checklist is complete`
-
-
-
-
-
-
-
-                        : `${name} still has unchecked items`,
-
-
-
-
-
-
-
+                    status: checklistStatus,
+                    message: checklistMessage,
                 },
-
-
-
-
-
-
-
             ],
-
-
-
-
-
-
-
         };
 
 
@@ -11296,229 +11202,112 @@ ${formatSuggestion()}
 
 
         const content = await this.fileService.readFile(filePath);
-
-
-
-
-
-
-
-        const parsed = (0, gray_matter_1.default)(content);
-
-
-
-
-
-
-
-        const optionalSteps = Array.isArray(parsed.data.optional_steps) ? parsed.data.optional_steps : [];
-
-
-
-
-
-
-
-        const passedOptionalSteps = Array.isArray(parsed.data.passed_optional_steps)
-
-
-
-
-
-
-
-            ? parsed.data.passed_optional_steps
-
-
-
-
-
-
-
-            : [];
-
-
-
-
-
-
-
-        const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-
-
-
-
-
-
-
-        const checklistComplete = !/- \[ \]/.test(content);
-
-
-
-
-
-
-
+        const hasFrontmatter = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(content);
+        let parsed = null;
+        let parseError = null;
+        if (hasFrontmatter) {
+            try {
+                parsed = (0, gray_matter_1.default)(content);
+            }
+            catch (error) {
+                parseError = error;
+            }
+        }
+        const data = parsed?.data ?? {};
+        const optionalStepsFieldValid = Array.isArray(data.optional_steps);
+        const passedOptionalStepsFieldValid = Array.isArray(data.passed_optional_steps);
+        const optionalSteps = optionalStepsFieldValid ? data.optional_steps : [];
+        const passedOptionalSteps = passedOptionalStepsFieldValid ? data.passed_optional_steps : [];
+        const createdFieldValid = (typeof data.created === 'string' && data.created.trim().length > 0) ||
+            (data.created instanceof Date && !Number.isNaN(data.created.getTime()));
+        const missingRequiredFields = [];
+        if (typeof data.feature !== 'string' || data.feature.trim().length === 0) {
+            missingRequiredFields.push('feature');
+        }
+        if (!createdFieldValid) {
+            missingRequiredFields.push('created');
+        }
+        if (typeof data.status !== 'string' || data.status.trim().length === 0) {
+            missingRequiredFields.push('status');
+        }
+        if (!optionalStepsFieldValid) {
+            missingRequiredFields.push('optional_steps');
+        }
+        if (!passedOptionalStepsFieldValid) {
+            missingRequiredFields.push('passed_optional_steps');
+        }
+        const missing = optionalStepsFieldValid
+            ? activatedSteps.filter(step => !optionalSteps.includes(step))
+            : [...activatedSteps];
+        const checklistItems = parsed?.content.match(/^\s*-\s+\[(?: |x|X)\]\s+.+$/gm) ?? [];
+        const uncheckedItems = parsed?.content.match(/^\s*-\s+\[ \]\s+.+$/gm) ?? [];
+        const checklistStructureValid = checklistItems.length > 0;
+        const checklistComplete = hasFrontmatter &&
+            parseError === null &&
+            missingRequiredFields.length === 0 &&
+            checklistStructureValid &&
+            uncheckedItems.length === 0;
+        let frontmatterMessage = 'verification.md frontmatter parsed successfully';
+        if (!hasFrontmatter) {
+            frontmatterMessage = 'verification.md is missing a valid frontmatter block';
+        }
+        else if (parseError) {
+            frontmatterMessage = `verification.md frontmatter cannot be parsed: ${parseError.message}`;
+        }
+        let requiredFieldsMessage = 'verification.md has all required frontmatter fields';
+        if (!hasFrontmatter || parseError) {
+            requiredFieldsMessage = 'Cannot validate required fields in verification.md because frontmatter is invalid';
+        }
+        else if (missingRequiredFields.length > 0) {
+            requiredFieldsMessage = `Missing or invalid required fields in verification.md: ${missingRequiredFields.join(', ')}`;
+        }
+        let optionalStepsMessage = 'All activated optional steps are present in verification.md';
+        if (!optionalStepsFieldValid) {
+            optionalStepsMessage = 'verification.md frontmatter field optional_steps must be an array';
+        }
+        else if (missing.length > 0) {
+            optionalStepsMessage = `Missing optional steps in verification.md: ${missing.join(', ')}`;
+        }
+        let checklistStatus = 'pass';
+        let checklistMessage = 'verification.md checklist is complete';
+        if (!hasFrontmatter || parseError) {
+            checklistStatus = 'fail';
+            checklistMessage = 'verification.md checklist cannot be validated because frontmatter is invalid';
+        }
+        else if (!checklistStructureValid) {
+            checklistStatus = 'fail';
+            checklistMessage = 'verification.md must contain at least one Markdown checklist item';
+        }
+        else if (uncheckedItems.length > 0) {
+            checklistStatus = 'warn';
+            checklistMessage = 'verification.md still has unchecked items';
+        }
         return {
-
-
-
-
-
-
-
             optionalSteps,
-
-
-
-
-
-
-
             passedOptionalSteps,
-
-
-
-
-
-
-
             checklistComplete,
-
-
-
-
-
-
-
             checks: [
-
-
-
-
-
-
-
                 {
-
-
-
-
-
-
-
+                    name: 'verification.md.frontmatter',
+                    status: hasFrontmatter && parseError === null ? 'pass' : 'fail',
+                    message: frontmatterMessage,
+                },
+                {
+                    name: 'verification.md.required_fields',
+                    status: hasFrontmatter && parseError === null && missingRequiredFields.length === 0 ? 'pass' : 'fail',
+                    message: requiredFieldsMessage,
+                },
+                {
                     name: 'verification.md.optional_steps',
-
-
-
-
-
-
-
-                    status: missing.length === 0 ? 'pass' : 'fail',
-
-
-
-
-
-
-
-                    message: missing.length === 0
-
-
-
-
-
-
-
-                        ? 'All activated optional steps are present in verification.md'
-
-
-
-
-
-
-
-                        : `Missing optional steps in verification.md: ${missing.join(', ')}`,
-
-
-
-
-
-
-
+                    status: optionalStepsFieldValid && missing.length === 0 ? 'pass' : 'fail',
+                    message: optionalStepsMessage,
                 },
-
-
-
-
-
-
-
                 {
-
-
-
-
-
-
-
                     name: 'verification.md.checklist',
-
-
-
-
-
-
-
-                    status: checklistComplete ? 'pass' : 'warn',
-
-
-
-
-
-
-
-                    message: checklistComplete
-
-
-
-
-
-
-
-                        ? 'verification.md checklist is complete'
-
-
-
-
-
-
-
-                        : 'verification.md still has unchecked items',
-
-
-
-
-
-
-
+                    status: checklistStatus,
+                    message: checklistMessage,
                 },
-
-
-
-
-
-
-
             ],
-
-
-
-
-
-
-
         };
 
 

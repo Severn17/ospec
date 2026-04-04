@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const matter = require('gray-matter');
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'changes', 'for-ai']);
 const INDEX_FILE = 'SKILL.index.json';
@@ -282,46 +283,31 @@ async function buildChangeSummary(rootDir, changeName, config) {
   }
 
   if (tasksExists) {
-    const tasks = parseFrontmatter(await fsp.readFile(tasksPath, 'utf8'));
-    const optionalSteps = ensureArray(tasks.data.optional_steps);
-    const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-    const checklistComplete = !/- \[ \]/.test(tasks.body);
-    checks.push({
-      name: 'tasks.md.optional_steps',
-      status: missing.length === 0 ? 'pass' : 'fail',
-      message:
-        missing.length === 0
-          ? 'All activated optional steps are present in tasks.md'
-          : `Missing optional steps in tasks.md: ${missing.join(', ')}`,
+    const tasks = analyzeWorkflowChecklistDocument(await fsp.readFile(tasksPath, 'utf8'), {
+      name: 'tasks.md',
+      activatedSteps,
+      requiredFields: [
+        ['feature', 'string'],
+        ['created', 'string_or_date'],
+        ['optional_steps', 'array'],
+      ],
     });
-    checks.push({
-      name: 'tasks.md.checklist',
-      status: checklistComplete ? 'pass' : 'warn',
-      message: checklistComplete ? 'tasks.md checklist is complete' : 'tasks.md still has unchecked items',
-    });
+    checks.push(...tasks.checks);
   }
 
   if (verificationExists) {
-    const verification = parseFrontmatter(await fsp.readFile(verificationPath, 'utf8'));
-    const optionalSteps = ensureArray(verification.data.optional_steps);
-    const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-    const checklistComplete = !/- \[ \]/.test(verification.body);
-    checks.push({
-      name: 'verification.md.optional_steps',
-      status: missing.length === 0 ? 'pass' : 'fail',
-      message:
-        missing.length === 0
-          ? 'All activated optional steps are present in verification.md'
-          : `Missing optional steps in verification.md: ${missing.join(', ')}`,
+    const verification = analyzeWorkflowChecklistDocument(await fsp.readFile(verificationPath, 'utf8'), {
+      name: 'verification.md',
+      activatedSteps,
+      requiredFields: [
+        ['feature', 'string'],
+        ['created', 'string_or_date'],
+        ['status', 'string'],
+        ['optional_steps', 'array'],
+        ['passed_optional_steps', 'array'],
+      ],
     });
-    checks.push({
-      name: 'verification.md.checklist',
-      status: checklistComplete ? 'pass' : 'warn',
-      message:
-        checklistComplete
-          ? 'verification.md checklist is complete'
-          : 'verification.md still has unchecked items',
-    });
+    checks.push(...verification.checks);
   }
 
   const hasProtocolIssues = checks.some(check => check.status !== 'pass');
@@ -476,6 +462,93 @@ function parseSkillFile(content) {
   };
 }
 
+function analyzeWorkflowChecklistDocument(content, options) {
+  const hasFrontmatter = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(content);
+  let parsed = null;
+  let parseError = null;
+
+  if (hasFrontmatter) {
+    try {
+      parsed = matter(content);
+    } catch (error) {
+      parseError = error;
+    }
+  }
+
+  const data = parsed?.data ?? {};
+  const optionalStepsFieldValid = Array.isArray(data.optional_steps);
+  const optionalSteps = optionalStepsFieldValid ? ensureArray(data.optional_steps) : [];
+  const invalidRequiredFields = options.requiredFields
+    .filter(([fieldName, fieldType]) => !isValidFrontmatterField(data[fieldName], fieldType))
+    .map(([fieldName]) => fieldName);
+  const missingActivatedSteps = optionalStepsFieldValid
+    ? options.activatedSteps.filter(step => !optionalSteps.includes(step))
+    : [...options.activatedSteps];
+  const checklistItems = parsed?.content.match(/^\s*-\s+\[(?: |x|X)\]\s+.+$/gm) ?? [];
+  const uncheckedItems = parsed?.content.match(/^\s*-\s+\[ \]\s+.+$/gm) ?? [];
+  const checklistStructureValid = checklistItems.length > 0;
+
+  let frontmatterMessage = `${options.name} frontmatter parsed successfully`;
+  if (!hasFrontmatter) {
+    frontmatterMessage = `${options.name} is missing a valid frontmatter block`;
+  } else if (parseError) {
+    frontmatterMessage = `${options.name} frontmatter cannot be parsed: ${parseError.message}`;
+  }
+
+  let requiredFieldsMessage = `${options.name} has all required frontmatter fields`;
+  if (!hasFrontmatter || parseError) {
+    requiredFieldsMessage = `Cannot validate required fields in ${options.name} because frontmatter is invalid`;
+  } else if (invalidRequiredFields.length > 0) {
+    requiredFieldsMessage = `Missing or invalid required fields in ${options.name}: ${invalidRequiredFields.join(', ')}`;
+  }
+
+  let optionalStepsMessage = `All activated optional steps are present in ${options.name}`;
+  if (!optionalStepsFieldValid) {
+    optionalStepsMessage = `${options.name} frontmatter field optional_steps must be an array`;
+  } else if (missingActivatedSteps.length > 0) {
+    optionalStepsMessage = `Missing optional steps in ${options.name}: ${missingActivatedSteps.join(', ')}`;
+  }
+
+  let checklistStatus = 'pass';
+  let checklistMessage = `${options.name} checklist is complete`;
+  if (!hasFrontmatter || parseError) {
+    checklistStatus = 'fail';
+    checklistMessage = `${options.name} checklist cannot be validated because frontmatter is invalid`;
+  } else if (!checklistStructureValid) {
+    checklistStatus = 'fail';
+    checklistMessage = `${options.name} must contain at least one Markdown checklist item`;
+  } else if (uncheckedItems.length > 0) {
+    checklistStatus = 'warn';
+    checklistMessage = `${options.name} still has unchecked items`;
+  }
+
+  return {
+    optionalSteps,
+    checks: [
+      {
+        name: `${options.name}.frontmatter`,
+        status: hasFrontmatter && parseError === null ? 'pass' : 'fail',
+        message: frontmatterMessage,
+      },
+      {
+        name: `${options.name}.required_fields`,
+        status: hasFrontmatter && parseError === null && invalidRequiredFields.length === 0 ? 'pass' : 'fail',
+        message: requiredFieldsMessage,
+      },
+      {
+        name: `${options.name}.optional_steps`,
+        status: optionalStepsFieldValid && missingActivatedSteps.length === 0 ? 'pass' : 'fail',
+        message: optionalStepsMessage,
+      },
+      {
+        name: `${options.name}.checklist`,
+        status: checklistStatus,
+        message: checklistMessage,
+      },
+    ],
+  };
+}
+
 function normalizeLineEndings(content) {
   return String(content || '').replace(/\r\n?/g, '\n');
 }
@@ -515,6 +588,25 @@ function parseFrontmatter(content) {
     data,
     body: content.slice(match[0].length),
   };
+}
+
+function isValidFrontmatterField(value, type) {
+  if (type === 'string') {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
+
+  if (type === 'string_or_date') {
+    return (
+      (typeof value === 'string' && value.trim().length > 0) ||
+      (value instanceof Date && !Number.isNaN(value.getTime()))
+    );
+  }
+
+  if (type === 'array') {
+    return Array.isArray(value);
+  }
+
+  return false;
 }
 
 function parseValue(rawValue) {

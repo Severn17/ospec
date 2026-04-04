@@ -98,48 +98,12 @@ class VerifyCommand extends BaseCommand_1.BaseCommand {
                 });
             }
             if (tasksExists) {
-                const tasksContent = await services_1.services.fileService.readFile(tasksPath);
-                const tasks = (0, gray_matter_1.default)(tasksContent);
-                const optionalSteps = Array.isArray(tasks.data.optional_steps)
-                    ? tasks.data.optional_steps
-                    : [];
-                const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-                checks.push({
-                    name: 'tasks.optional_steps',
-                    status: missing.length === 0 ? 'pass' : 'fail',
-                    message: missing.length === 0
-                        ? 'All activated optional steps are present in tasks.md'
-                        : `Missing optional steps in tasks.md: ${missing.join(', ')}`,
-                });
-                checks.push({
-                    name: 'tasks checklist',
-                    status: /- \[ \]/.test(tasksContent) ? 'warn' : 'pass',
-                    message: /- \[ \]/.test(tasksContent)
-                        ? 'tasks.md still has unchecked items'
-                        : 'tasks.md checklist is complete',
-                });
+                const tasksAnalysis = await services_1.services.projectService.analyzeChecklistDocument(tasksPath, 'tasks.md', activatedSteps);
+                checks.push(...tasksAnalysis.checks);
             }
             if (verificationExists) {
-                const verificationContent = await services_1.services.fileService.readFile(verificationPath);
-                const verification = (0, gray_matter_1.default)(verificationContent);
-                const optionalSteps = Array.isArray(verification.data.optional_steps)
-                    ? verification.data.optional_steps
-                    : [];
-                const missing = activatedSteps.filter(step => !optionalSteps.includes(step));
-                checks.push({
-                    name: 'verification.optional_steps',
-                    status: missing.length === 0 ? 'pass' : 'fail',
-                    message: missing.length === 0
-                        ? 'All activated optional steps are present in verification.md'
-                        : `Missing optional steps in verification.md: ${missing.join(', ')}`,
-                });
-                checks.push({
-                    name: 'verification checklist',
-                    status: /- \[ \]/.test(verificationContent) ? 'warn' : 'pass',
-                    message: /- \[ \]/.test(verificationContent)
-                        ? 'verification.md still has unchecked items'
-                        : 'verification.md checklist is complete',
-                });
+                const verificationAnalysis = await services_1.services.projectService.analyzeVerificationDocument(verificationPath, activatedSteps);
+                checks.push(...verificationAnalysis.checks);
             }
             if (activatedSteps.includes('stitch_design_review')) {
                 const approvalPath = path.join(targetPath, 'artifacts', 'stitch', 'approval.json');
