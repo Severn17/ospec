@@ -9,6 +9,8 @@ class ExecutionTemplateBuilder extends TemplateBuilderBase_1.TemplateBuilderBase
     }
     generateProposalTemplate(input) {
         const context = this.inputs.normalizeFeatureTemplateInput(input);
+        this.setReferenceDocumentContext(context.projectRoot, context.documentPath);
+        try {
         const created = this.getCurrentDate();
         const projectDocs = context.projectContext.projectDocs ?? [];
         const moduleSkills = context.projectContext.moduleSkills ?? [];
@@ -156,9 +158,15 @@ ${this.formatChecklist(context.acceptanceCriteria, 'قيد التحديد')}`;
             affects: context.affects,
             flags: context.flags,
         }, this.copy(context.documentLanguage, zh, en, ja, ar));
+        }
+        finally {
+            this.clearReferenceDocumentContext();
+        }
     }
     generateTasksTemplate(input) {
         const context = this.inputs.normalizeFeatureTemplateInput(input);
+        this.setReferenceDocumentContext(context.projectRoot, context.documentPath);
+        try {
         const created = this.getCurrentDate();
         const projectDocs = context.projectContext.projectDocs ?? [];
         const moduleSkills = context.projectContext.moduleSkills ?? [];
@@ -255,9 +263,15 @@ ${optionalStepTasksAr}`.trim();
             created,
             optional_steps: context.optionalSteps,
         }, this.copy(context.documentLanguage, zh, en, ja, ar));
+        }
+        finally {
+            this.clearReferenceDocumentContext();
+        }
     }
     generateVerificationTemplate(input) {
         const context = this.inputs.normalizeFeatureTemplateInput(input);
+        this.setReferenceDocumentContext(context.projectRoot, context.documentPath);
+        try {
         const created = this.getCurrentDate();
         const projectDocs = context.projectContext.projectDocs ?? [];
         const moduleSkills = context.projectContext.moduleSkills ?? [];
@@ -365,9 +379,15 @@ ${this.formatChecklist(context.acceptanceCriteria, 'معيار قبول 1')}
             optional_steps: context.optionalSteps,
             passed_optional_steps: [],
         }, this.copy(context.documentLanguage, zh, en, ja, ar));
+        }
+        finally {
+            this.clearReferenceDocumentContext();
+        }
     }
     generateReviewTemplate(input) {
         const context = this.inputs.normalizeFeatureTemplateInput(input);
+        this.setReferenceDocumentContext(context.projectRoot, context.documentPath);
+        try {
         const created = this.getCurrentDate();
         const projectDocs = context.projectContext.projectDocs ?? [];
         const moduleSkills = context.projectContext.moduleSkills ?? [];
@@ -520,6 +540,10 @@ ${this.formatReferenceList(linkedKnowledgeDocs, 'قيد التحديد')}
             created,
             status: 'pending_review',
         }, this.copy(context.documentLanguage, zh, en, ja, ar));
+        }
+        finally {
+            this.clearReferenceDocumentContext();
+        }
     }
 }
 exports.ExecutionTemplateBuilder = ExecutionTemplateBuilder;
